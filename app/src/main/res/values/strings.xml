@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">DecideIT</string>
+    <string name="AppTitle">Student Voting Application</string>
+    <string name="LogoDescription">Logo of the application.\nSource: KOrganizer from the default KDE Breeze icon theme.</string>
+    <string name="usernameEditHint">Enter username</string>
+    <string name="passwordEditHint">Enter password</string>
+    <string name="LoginButtonText">Login</string>
+    <string name="LoginFailedToast">Login failed! Invalid username and/or password!</string>
+    <string name="RegistrationDescription">If you do not have an account, please register here:</string>
+    <string name="RegisterButtonText">Register</string>
+    <string name="RegistrationUsername">Enter username</string>
+    <string name="RegistrationIndex">Enter index number</string>
+    <string name="RegistrationName">Enter name</string>
+    <string name="RegistrationPassword">Enter password</string>
+    <string name="ProfileButton">Profile</string>
+    <string name="CalendarButton">Calendar</string>
+    <string name="ProfileTextPrefix">Hello %s</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
