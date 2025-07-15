@@ -6,10 +6,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".StudentViewActivity">
+    tools:context=".AdminActivity">
 
     <ImageView
-        android:id="@+id/appLogo3"
+        android:id="@+id/appLogo5"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:contentDescription="@string/LogoDescription"
@@ -17,13 +17,15 @@
         android:paddingBottom="@dimen/LogoPadding"
         app:srcCompat="@drawable/logo" />
 
+
     <FrameLayout
-        android:id="@+id/fragmentLoader"
+        android:id="@+id/fragmentLoader2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1">
 
     </FrameLayout>
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,23 +33,25 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/profileButton"
+            android:id="@+id/studentsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:backgroundTint="@color/teal_200"
-            android:onClick="onProfileClicked"
-            android:text="@string/ProfileButton"
+            android:onClick="onStudentsClicked"
+            android:text="@string/StudentsText"
             tools:ignore="ButtonStyle,TextContrastCheck" />
 
         <Button
-            android:id="@+id/calendarButton"
+            android:id="@+id/sessionsButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:backgroundTint="@color/purple_200"
-            android:onClick="onCalendarClicked"
-            android:text="@string/CalendarButton"
+            android:onClick="onSessionsClicked"
+            android:text="@string/SessionsText"
             tools:ignore="ButtonStyle,TextContrastCheck" />
     </LinearLayout>
+
+
 </LinearLayout>

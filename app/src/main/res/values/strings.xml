@@ -15,6 +15,15 @@
     <string name="ProfileButton">Profile</string>
     <string name="CalendarButton">Calendar</string>
     <string name="ProfileTextPrefix">Hello %s</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="SessionText">Session %d</string>
+    <string name="DescriptionText">Description:\n%s\n</string>
+    <string name="SessionDateText">Date: %s</string>
+    <string name="TimeLeftText">Time left to vote: %d day%s left</string>
+    <string name="VoteYes">Yes</string>
+    <string name="VoteNo">No</string>
+    <string name="VoteAbstain">Abstain</string>
+    <string name="sessionListPlaceholder">Session list placeholder</string>
+    <string name="studentListPlaceholder">Student list placeholder</string>
+    <string name="StudentsText">Students</string>
+    <string name="SessionsText">Sessions</string>
 </resources>

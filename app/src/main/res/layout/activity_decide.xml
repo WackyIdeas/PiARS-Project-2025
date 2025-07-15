@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".DecideActivity">
+
+    <ImageView
+        android:id="@+id/appLogo4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:contentDescription="@string/LogoDescription"
+        android:paddingTop="@dimen/LogoPadding"
+        android:paddingBottom="@dimen/LogoPadding"
+        app:srcCompat="@drawable/logo" />
+
+    <TextView
+        android:id="@+id/sessionTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/SessionText"
+        android:textAlignment="center"
+        android:textSize="@dimen/AppTitleSize"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/descriptionText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/DescriptionText" />
+
+    <TextView
+        android:id="@+id/dateText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/SessionDateText" />
+
+    <TextView
+        android:id="@+id/timeLeftText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/TimeLeftText" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/yesButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="@color/purple_200"
+            android:onClick="castVote"
+            android:text="@string/VoteYes"
+            tools:ignore="ButtonStyle" />
+
+        <Button
+            android:id="@+id/noButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="@color/purple_200"
+            android:onClick="castVote"
+            android:text="@string/VoteNo"
+            tools:ignore="ButtonStyle" />
+
+        <Button
+            android:id="@+id/abstainButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:backgroundTint="@color/purple_200"
+            android:onClick="castVote"
+            android:text="@string/VoteAbstain"
+            tools:ignore="ButtonStyle" />
+    </LinearLayout>
+</LinearLayout>

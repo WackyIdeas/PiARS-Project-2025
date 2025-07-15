@@ -13,6 +13,12 @@
         android:theme="@style/Theme.DecideIT"
         tools:targetApi="31">
         <activity
+            android:name=".AdminActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DecideActivity"
+            android:exported="false" />
+        <activity
             android:name=".StudentViewActivity"
             android:exported="false" />
         <activity

@@ -1,5 +1,6 @@
 package bogdan.cvetanovski.pasalic;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -9,6 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
 import android.widget.Toast;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -37,7 +43,22 @@ public class CalendarFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_calendar, container, false);
         CalendarView cv = v.findViewById(R.id.calendarView);
         cv.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
-            Toast.makeText(getActivity(), "Qool " + dayOfMonth, Toast.LENGTH_LONG).show();
+
+            LocalDate date = LocalDate.of(year, month, dayOfMonth);
+
+            LocalDate expiryDate = LocalDate.of(year, month, dayOfMonth);
+            expiryDate = expiryDate.plusWeeks(2);
+            long daysBetween = ChronoUnit.DAYS.between(date, expiryDate);
+
+            Intent intent = new Intent(getActivity(), DecideActivity.class);
+            Bundle params = new Bundle();
+            // Placeholder values
+            params.putLong("daysLeft", daysBetween);
+            params.putInt("sessionNumber", 1);
+            params.putString("sessionDate", date.toString());
+            params.putString("description", "Sample description");
+            intent.putExtras(params);
+            startActivity(intent);
         });
         return v;
     }

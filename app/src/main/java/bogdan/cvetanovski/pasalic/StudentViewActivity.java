@@ -25,11 +25,6 @@ public class StudentViewActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
         String fragmentName = getIntent().getExtras().getString("studentName");
         profileFragment = ProfileFragment.newInstance(fragmentName);
         calendarFragment = CalendarFragment.newInstance();

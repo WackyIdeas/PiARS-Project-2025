@@ -47,6 +47,8 @@ public class LoginActivity extends AppCompatActivity {
         } else if(nameInput.getText().toString().equals("admin") &&
                   passInput.getText().toString().equals("admin")) {
             // Enter admin page
+            Intent intent = new Intent(this, AdminActivity.class);
+            startActivity(intent);
             return;
         } else {
             // Login failed, notify user about it

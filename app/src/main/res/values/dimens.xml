@@ -2,4 +2,5 @@
 <resources>
     <dimen name="AppTitleSize">24sp</dimen>
     <dimen name="ProfileTextSize">18sp</dimen>
+    <dimen name="LogoPadding">24dp</dimen>
 </resources>
