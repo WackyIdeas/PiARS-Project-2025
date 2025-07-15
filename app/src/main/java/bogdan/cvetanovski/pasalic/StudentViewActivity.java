@@ -28,7 +28,7 @@ public class StudentViewActivity extends AppCompatActivity {
         String fragmentName = getIntent().getExtras().getString("studentName");
         profileFragment = ProfileFragment.newInstance(fragmentName);
         calendarFragment = CalendarFragment.newInstance();
-        // Keeping both fragments loaded in memory and the buttons simply
+        // Keeping both fragments loaded in memory and the buttons simply toggle their visibility
         getSupportFragmentManager().beginTransaction().add(R.id.fragmentLoader, calendarFragment).commit();
         getSupportFragmentManager().beginTransaction().add(R.id.fragmentLoader, profileFragment).commit();
         getSupportFragmentManager().beginTransaction().hide(calendarFragment).commit();

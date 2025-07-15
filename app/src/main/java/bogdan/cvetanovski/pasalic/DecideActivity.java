@@ -11,11 +11,6 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
 public class DecideActivity extends AppCompatActivity {
 
     int sessionNumber;
@@ -23,13 +18,14 @@ public class DecideActivity extends AppCompatActivity {
     String sessionDate;
     long daysLeft;
 
+    // Keep track of which button is pressed from the button group
     int[] buttonGroup = {
             R.id.yesButton,
             R.id.noButton,
             R.id.abstainButton
     };
 
-    int selectedButton;
+    int selectedButton = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,17 +37,13 @@ public class DecideActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-    }
 
-
-    @Override
-    protected void onStart() {
-        super.onStart();
         description = getIntent().getExtras().getString("description");
         sessionDate = getIntent().getExtras().getString("sessionDate");
         daysLeft = getIntent().getExtras().getLong("daysLeft");
         sessionNumber = getIntent().getExtras().getInt("sessionNumber");
 
+        // Update UI with the passed information
         TextView tv = findViewById(R.id.descriptionText);
         String result = getResources().getString(R.string.DescriptionText, description);
         tv.setText(result);
@@ -67,16 +59,16 @@ public class DecideActivity extends AppCompatActivity {
         tv = findViewById(R.id.timeLeftText);
         result = getResources().getString(R.string.TimeLeftText, daysLeft, daysLeft == 1 ? "" : "s");
         tv.setText(result);
-
     }
 
     public void castVote(View view) {
+        // onClick event handler provides the button that was clicked
         selectedButton = view.getId();
         Button btn = (Button)view;
         btn.setBackgroundColor(getResources().getColor(R.color.red, this.getTheme()));
         for (int j : buttonGroup) {
             if (j != selectedButton) {
-                Button b = (Button)findViewById(j);
+                Button b = findViewById(j);
                 b.setBackgroundColor(getResources().getColor(R.color.purple_200, this.getTheme()));
             }
         }

@@ -9,11 +9,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
-import android.widget.Toast;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -41,21 +40,28 @@ public class CalendarFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_calendar, container, false);
+        // Add event handler for OnDateChangeListener
+        // https://developer.android.com/reference/android/widget/CalendarView.OnDateChangeListener
         CalendarView cv = v.findViewById(R.id.calendarView);
         cv.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
-
+            /*
+             * For now, assume that any session has a time limit of
+             * 2 weeks. Use ChronoUnit to calculate difference between
+             * two dates.
+             * https://docs.oracle.com/javase/8/docs/api/java/time/temporal/ChronoUnit.html
+             */
             LocalDate date = LocalDate.of(year, month, dayOfMonth);
-
-            LocalDate expiryDate = LocalDate.of(year, month, dayOfMonth);
-            expiryDate = expiryDate.plusWeeks(2);
+            LocalDate expiryDate = date.plusWeeks(2);
             long daysBetween = ChronoUnit.DAYS.between(date, expiryDate);
+            // Use DateTimeFormatter to get localized date format instead of ISO date
+            DateTimeFormatter dtf = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
 
             Intent intent = new Intent(getActivity(), DecideActivity.class);
             Bundle params = new Bundle();
             // Placeholder values
             params.putLong("daysLeft", daysBetween);
             params.putInt("sessionNumber", 1);
-            params.putString("sessionDate", date.toString());
+            params.putString("sessionDate", date.format(dtf));
             params.putString("description", "Sample description");
             intent.putExtras(params);
             startActivity(intent);

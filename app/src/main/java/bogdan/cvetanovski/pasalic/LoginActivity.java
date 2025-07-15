@@ -32,10 +32,18 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     public void tryLogin(View view) {
-        EditText nameInput = (EditText)(findViewById(R.id.usernameTextEdit));
-        EditText passInput = (EditText)(findViewById(R.id.passwordTextEdit));
+        // As of SDK >=26, findViewById no longer requires
+        // explicit casts as the return type is <T extends View>.
+        EditText nameInput = findViewById(R.id.usernameTextEdit);
+        EditText passInput = findViewById(R.id.passwordTextEdit);
 
-        // placeholder name/pass
+        /*
+         * Currently only allow login access for two fake users:
+         * 1. student / student
+         * 2. admin / admin
+         * If logging in as an admin, show a completely different
+         * activity.
+         */
         if(nameInput.getText().toString().equals("student") &&
            passInput.getText().toString().equals("student")) {
             // Enter student page
@@ -49,9 +57,9 @@ public class LoginActivity extends AppCompatActivity {
             // Enter admin page
             Intent intent = new Intent(this, AdminActivity.class);
             startActivity(intent);
-            return;
         } else {
             // Login failed, notify user about it
+            // https://developer.android.com/guide/topics/ui/notifiers/toasts
             String toastText = getResources().getString(R.string.LoginFailedToast);
             Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
         }

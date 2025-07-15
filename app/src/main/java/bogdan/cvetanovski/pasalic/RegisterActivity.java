@@ -26,10 +26,10 @@ public class RegisterActivity extends AppCompatActivity {
 
     /*
      * The assignment suggests using Intent to switch back to LoginActivity,
-     * but this can lead to an arbitrary amount of activities being spawned
-     * by the user by repeatedly tapping on the Register buttons on each
-     * newly loaded activity. This may lead to undesirable effects and is
-     * generally seen as bad practice.
+     * but this can lead to an arbitrary amount of redundant activities
+     * being pushed onto the activity stack by repeatedly tapping on the
+     * Register buttons on each newly loaded activity. This may lead to
+     * undesirable effects and is generally seen as bad practice.
      *
      * (In general, the number of loaded activities on
      * the activity stack should be kept to a minimum.)

@@ -24,9 +24,9 @@ public class AdminActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        // Largely the same as StudentViewActivity
         studentListFragment = StudentListFragment.newInstance();
         sessionListFragment = SessionListFragment.newInstance();
-        // Keeping both fragments loaded in memory and the buttons simply
         getSupportFragmentManager().beginTransaction().add(R.id.fragmentLoader2, studentListFragment).commit();
         getSupportFragmentManager().beginTransaction().add(R.id.fragmentLoader2, sessionListFragment).commit();
         getSupportFragmentManager().beginTransaction().hide(sessionListFragment).commit();
