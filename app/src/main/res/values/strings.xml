@@ -28,4 +28,12 @@
     <string name="SessionsText">Sessions</string>
     <string name="StudentPhotoDescription">Student photo</string>
     <string name="EmptyListIndicator">Empty List!</string>
+    <string name="DeleteConfirmationTitle">Delete Item</string>
+    <string name="DeleteConfirmationText">Are you sure you want to delete this item?</string>
+    <string name="SubmitButton">Submit</string>
+    <string name="SessionPast">Past</string>
+    <string name="SessionUpcoming">Upcoming</string>
+    <string name="VotedYES">Voted YES: %d</string>
+    <string name="VotedNO">Voted NO: %d</string>
+    <string name="VotedABSTAIN">Voted ABSTAIN: %d</string>
 </resources>

@@ -53,12 +53,12 @@ public class StudentModel {
         addItem("Stefan", "Stefanovic", "RA8/2026", -1);
         addItem("Petar", "Petrovic", "RA9/2026", -1);
         addItem("Anastasija", "Jovanovic", "RA10/2026", -1);
-        addItem("Bojan", "Petkovic", "RA12/2026", -1);
-        addItem("Dragan", "Dejanovic", "RA13/2026", -1);
-        addItem("Ljudmila", "Perisic", "RA14/2026", -1);
-        addItem("Dragana", "Stojanovic", "RA15/2026", -1);
-        addItem("Jelena", "Jankovic", "RA16/2026", -1);
-        addItem("Goran", "Stojkovic", "RA17/2026", -1);
+        addItem("Bojan", "Petkovic", "RA11/2026", -1);
+        addItem("Dragan", "Dejanovic", "RA12/2026", -1);
+        addItem("Ljudmila", "Perisic", "RA13/2026", -1);
+        addItem("Dragana", "Stojanovic", "RA14/2026", -1);
+        addItem("Jelena", "Jankovic", "RA15/2026", -1);
+        addItem("Goran", "Stojkovic", "RA16/2026", -1);
     }
 
     public StudentInfo addItem(String fn, String ln, String i, int img) {

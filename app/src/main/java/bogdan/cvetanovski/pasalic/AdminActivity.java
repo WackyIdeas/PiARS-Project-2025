@@ -36,6 +36,7 @@ public class AdminActivity extends AppCompatActivity {
     public void onStudentsClicked(View view) {
         getSupportFragmentManager().beginTransaction().hide(sessionListFragment).commit();
         getSupportFragmentManager().beginTransaction().show(studentListFragment).commit();
+        studentListFragment.tryNotifyEmptyList();
         Button studentsButton = findViewById(R.id.studentsButton);
         Button sessionsButton = findViewById(R.id.sessionsButton);
         studentsButton.setBackgroundColor(getResources().getColor(R.color.teal_200, this.getTheme()));
@@ -44,6 +45,7 @@ public class AdminActivity extends AppCompatActivity {
     public void onSessionsClicked(View view) {
         getSupportFragmentManager().beginTransaction().show(sessionListFragment).commit();
         getSupportFragmentManager().beginTransaction().hide(studentListFragment).commit();
+        sessionListFragment.tryNotifyEmptyList();
         Button studentsButton = findViewById(R.id.studentsButton);
         Button sessionsButton = findViewById(R.id.sessionsButton);
         studentsButton.setBackgroundColor(getResources().getColor(R.color.purple_200, this.getTheme()));

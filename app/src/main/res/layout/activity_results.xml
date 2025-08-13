@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".ResultsActivity">
+
+    <TextView
+        android:id="@+id/yesVotes"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/VotedYES"
+        android:textColor="@color/teal_200"
+        android:textSize="@dimen/AppTitleSize"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/noVotes"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/VotedNO"
+        android:textColor="@color/red"
+        android:textSize="@dimen/AppTitleSize"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/abstainVotes"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="@string/VotedABSTAIN"
+        android:textColor="@color/yellow_orange"
+        android:textSize="@dimen/AppTitleSize"
+        android:textStyle="bold" />
+</LinearLayout>

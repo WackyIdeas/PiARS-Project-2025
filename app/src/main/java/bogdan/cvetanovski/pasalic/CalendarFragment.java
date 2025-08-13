@@ -50,7 +50,7 @@ public class CalendarFragment extends Fragment {
              * two dates.
              * https://docs.oracle.com/javase/8/docs/api/java/time/temporal/ChronoUnit.html
              */
-            LocalDate date = LocalDate.of(year, month, dayOfMonth);
+            LocalDate date = LocalDate.of(year, month+1, dayOfMonth);
             LocalDate expiryDate = date.plusWeeks(2);
             long daysBetween = ChronoUnit.DAYS.between(date, expiryDate);
             // Use DateTimeFormatter to get localized date format instead of ISO date
