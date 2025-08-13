@@ -26,4 +26,6 @@
     <string name="studentListPlaceholder">Student list placeholder</string>
     <string name="StudentsText">Students</string>
     <string name="SessionsText">Sessions</string>
+    <string name="StudentPhotoDescription">Student photo</string>
+    <string name="EmptyListIndicator">Empty List!</string>
 </resources>
