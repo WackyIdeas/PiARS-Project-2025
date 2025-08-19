@@ -61,6 +61,14 @@ public class StudentAdapter extends BaseAdapter {
         TextView index = convertView.findViewById(R.id.index);
         CheckBox selected = convertView.findViewById(R.id.selection);
 
+        int imgRes = model.getItem(position).getImage();
+        if(imgRes != -1) {
+            studentPhoto.setImageResource(imgRes);
+        } else {
+            // Use default image if nothing is provided. Also fixes issue with recycling delegate items
+            studentPhoto.setImageResource(R.drawable.baseline_person_48);
+        }
+
         String nameStr = model.getItem(position).getFirstName() + " " + model.getItem(position).getLastName();
         name.setText(nameStr);
         index.setText(model.getItem(position).getIndex());

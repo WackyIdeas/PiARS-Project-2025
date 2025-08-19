@@ -58,13 +58,13 @@ public class StudentModel {
         addItem("Milena", "Milic", "RA4/2026", -1);
         addItem("Milos", "Nikolic", "RA5/2026", -1);
         addItem("Radmila", "Radic", "RA6/2026", -1);
-        addItem("Nikola", "Milanov", "RA7/2026", -1);
+        addItem("Nikola", "Milanov", "RA7/2026", R.drawable.baseline_account_box_48);
         addItem("Stefan", "Stefanovic", "RA8/2026", -1);
         addItem("Petar", "Petrovic", "RA9/2026", -1);
         addItem("Anastasija", "Jovanovic", "RA10/2026", -1);
         addItem("Bojan", "Petkovic", "RA11/2026", -1);
         addItem("Dragan", "Dejanovic", "RA12/2026", -1);
-        addItem("Ljudmila", "Perisic", "RA13/2026", -1);
+        addItem("Ljudmila", "Perisic", "RA13/2026", R.drawable.baseline_account_box_48);
         addItem("Dragana", "Stojanovic", "RA14/2026", -1);
         addItem("Jelena", "Jankovic", "RA15/2026", -1);
         addItem("Goran", "Stojkovic", "RA16/2026", -1);
