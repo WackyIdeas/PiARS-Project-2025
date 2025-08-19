@@ -22,6 +22,7 @@ public class StudentListFragment extends Fragment {
         return new StudentListFragment();
     }
 
+    // Notify the user via toasts if the student list is empty
     public void tryNotifyEmptyList() {
         if(adapterModel.getCount() == 0) {
             String toastText = getResources().getString(R.string.EmptyListIndicator);
@@ -36,9 +37,10 @@ public class StudentListFragment extends Fragment {
         adapterModel = new StudentAdapter(inflater);
 
         ListView listView = result.findViewById(R.id.studentListView);
-        listView.setAdapter(adapterModel);
+        listView.setAdapter(adapterModel); // Set the initialized adapter to the ListView
 
         tryNotifyEmptyList();
+        // Add event listener for when the underlying data model is changed
         adapterModel.registerDataSetObserver(new DataSetObserver() {
             @Override
             public void onChanged() {

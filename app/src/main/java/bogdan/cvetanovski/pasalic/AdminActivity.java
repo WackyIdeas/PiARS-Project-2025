@@ -36,7 +36,7 @@ public class AdminActivity extends AppCompatActivity {
     public void onStudentsClicked(View view) {
         getSupportFragmentManager().beginTransaction().hide(sessionListFragment).commit();
         getSupportFragmentManager().beginTransaction().show(studentListFragment).commit();
-        studentListFragment.tryNotifyEmptyList();
+        studentListFragment.tryNotifyEmptyList(); // Check and notify the user if the student model is empty
         Button studentsButton = findViewById(R.id.studentsButton);
         Button sessionsButton = findViewById(R.id.sessionsButton);
         studentsButton.setBackgroundColor(getResources().getColor(R.color.teal_200, this.getTheme()));

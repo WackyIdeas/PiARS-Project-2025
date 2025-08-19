@@ -23,6 +23,8 @@ import java.time.format.FormatStyle;
 
 public class SessionListFragment extends Fragment {
 
+    // Store the date from the CalendarView because CalendarView
+    // has no proper way to provide its currently selected date
     private LocalDate selectedDate;
     public SessionAdapter adapterModel;
     public SessionListFragment() {
@@ -49,11 +51,13 @@ public class SessionListFragment extends Fragment {
         ListView listView = v.findViewById(R.id.sessionListView);
         listView.setAdapter(adapterModel);
 
+        // Open the respective voting results page when an item delegate is tapped
         listView.setOnItemClickListener((parent, view, position, id) -> {
             Intent intent = new Intent(this.getActivity(), ResultsActivity.class);
             startActivity(intent);
         });
 
+        // Build an alert dialog for deletion confirmation
         listView.setOnItemLongClickListener((parent, view, position, id) -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
             String title = getResources().getString(R.string.DeleteConfirmationTitle);
@@ -70,7 +74,7 @@ public class SessionListFragment extends Fragment {
             builder.setNegativeButton(stringNo, (dialog, which) -> dialog.cancel());
             AlertDialog d = builder.create();
             d.show();
-            return true;
+            return true; // Important to mark the event as "finished" so that the tap event defined above isn't triggered
         });
 
         tryNotifyEmptyList();
@@ -85,7 +89,7 @@ public class SessionListFragment extends Fragment {
         selectedDate = LocalDate.now();
         CalendarView calendar = v.findViewById(R.id.sessionCalendar);
         calendar.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
-            selectedDate = LocalDate.of(year, month+1, dayOfMonth); // Month for some reason takes values in the range [0, 11]
+            selectedDate = LocalDate.of(year, month+1, dayOfMonth); // Month weirdly enough takes values in the range [0, 11]
         });
         Button submitButton = v.findViewById(R.id.submitButton);
         submitButton.setOnClickListener(view -> {

@@ -3,7 +3,15 @@ package bogdan.cvetanovski.pasalic;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+/*
+ * StudentModel is the underlying data set for student information
+ * that gets rendered by a ListView component via the StudentAdapter
+ * class. This will likely be modified to pull data from a local
+ * SQLite database in future versions.
+ */
 public class StudentModel {
+
+    // StudentInfo class that stores all the relevant information of a student
     public class StudentInfo {
         private String firstName;
         private String lastName;
@@ -43,6 +51,7 @@ public class StudentModel {
     }
     public StudentModel() {
         data = new LinkedHashMap<String, StudentInfo>();
+        // Add mock data to display on the ListView
         addItem("Pera", "Peric", "RA1/2026", -1);
         addItem("Mara", "Maric", "RA2/2026", -1);
         addItem("Marko", "Markovic", "RA3/2026", -1);
@@ -70,9 +79,11 @@ public class StudentModel {
         return data.remove(index);
     }
 
+    // Get student using their unique index
     public StudentInfo getItem(String index) {
         return data.get(index);
     }
+    // Get student using the internal hashmap position
     public StudentInfo getItem(int index) {
         if(index < 0 || index >= data.size()) return null;
         return (StudentInfo)data.values().toArray()[index];
@@ -82,5 +93,10 @@ public class StudentModel {
         return data.size();
     }
 
+    /* Using LinkedHashMap in order to:
+     * 1. Access students by their index
+     * 2. Store students in order as they are added to the hashmap,
+     *    as well as access students by the internal position within the hashmap
+     */
     private LinkedHashMap<String, StudentInfo> data;
 }

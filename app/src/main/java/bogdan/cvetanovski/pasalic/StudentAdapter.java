@@ -9,6 +9,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.CheckBox;
 
+/*
+ * StudentAdapter acts as a bridge between the data set and the
+ * UI displaying it. Currently the adapter pulls data from a
+ * test StudentModel class that doesn't store any persistent
+ * data, meaning that the model resets itself every time the
+ * admin activity is unloaded.
+ */
 public class StudentAdapter extends BaseAdapter {
 
     LayoutInflater layoutInflater;
@@ -34,15 +41,18 @@ public class StudentAdapter extends BaseAdapter {
 
     public void removeItem(String index) {
         model.removeItem(index);
+        // Update the adapter as the underlying data model is changed
         notifyDataSetChanged();
     }
 
+    // LayoutInflater is required to instantiate the ListView's delegate items
     public StudentAdapter(LayoutInflater inflater) {
         layoutInflater = inflater;
         model = new StudentModel();
     }
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        // Create a new delegate item for every item in the model
         if (convertView == null) {
             convertView = layoutInflater.inflate(R.layout.student_delegate, parent, false);
         }
@@ -56,6 +66,7 @@ public class StudentAdapter extends BaseAdapter {
         index.setText(model.getItem(position).getIndex());
 
         selected.setOnClickListener(v -> {
+            // Use AlertDialog Builder to set up an alert dialog for deletion
             AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
             String title = v.getContext().getResources().getString(R.string.DeleteConfirmationTitle);
             String text = v.getContext().getResources().getString(R.string.DeleteConfirmationText);
