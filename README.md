@@ -8,7 +8,7 @@
     - Samsung Galaxy A50 (SM-A505FN), DotOS (Android 12, SDK 31, 32)
     - Huawei P30 Lite (MAR-LX1A), EMUI 10 (Android 10, SDK 29)
     - amd64 VM, AOSP (Android 16, SDK 36)
-- Test screenshots can be found in `./k1_screenshots/`
+- Test screenshots can be found in `./k1_screenshots/`, `./k2_screenshots/`
 
 ### IDE information:
 
