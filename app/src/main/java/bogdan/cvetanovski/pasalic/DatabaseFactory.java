@@ -1,0 +1,86 @@
+package bogdan.cvetanovski.pasalic;
+
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+public class DatabaseFactory {
+
+    /*public static ObjectRow getQuerySingleResult(String table) throws InvalidTableException {
+        if(table.equals(DatabaseManager.USERS_TABLE)) {
+            User user = new User();
+            return user;
+        } else if(table.equals(DatabaseManager.SESSIONS_TABLE)) {
+            Session session = new Session();
+            return session;
+        } else if(table.equals(DatabaseManager.VOTES_TABLE)) {
+            Vote vote = new Vote();
+            return vote;
+        } else {
+            throw new InvalidTableException("Invalid table name!");
+        }
+    }*/
+    public static ObjectRow[] getQueryResults(Context c, String table) throws InvalidTableException {
+        SQLiteDatabase db = DatabaseManager.getInstance(c).getReadableDatabase();
+
+        Cursor cursor = db.query(table, null, null, null, null, null, null);
+
+        switch (table) {
+            case DatabaseManager.USERS_TABLE:
+                User[] users = new User[cursor.getCount()];
+                try {
+                    do {
+                        int i = cursor.getPosition();
+                        users[i].setId(cursor.getInt(0));
+                        users[i].setName(cursor.getString(1));
+                        users[i].setSurname(cursor.getString(2));
+                        users[i].setUsername(cursor.getString(3));
+                        users[i].setHash(cursor.getString(4));
+                        users[i].setRole(cursor.getInt(5));
+                    } while (cursor.moveToNext());
+                } catch (Exception e) {
+                    return null;
+                } finally {
+                    if (!cursor.isClosed()) cursor.close();
+                }
+                return users;
+            case DatabaseManager.SESSIONS_TABLE:
+                Session[] sessions = new Session[cursor.getCount()];
+                try {
+                    do {
+                        int i = cursor.getPosition();
+                        sessions[i].setId(cursor.getInt(0));
+                        sessions[i].setDate(cursor.getString(1));
+                        sessions[i].setName(cursor.getString(2));
+                        sessions[i].setDescription(cursor.getString(3));
+                        sessions[i].setEndDate(cursor.getString(4));
+                    } while (cursor.moveToNext());
+                } catch (Exception e) {
+                    return null;
+                } finally {
+                    if (!cursor.isClosed()) cursor.close();
+                }
+                return sessions;
+            case DatabaseManager.VOTES_TABLE:
+                Vote[] votes = new Vote[cursor.getCount()];
+                try {
+                    do {
+                        int i = cursor.getPosition();
+                        votes[i].setId(cursor.getInt(0));
+                        votes[i].setVotesYes(cursor.getInt(1));
+                        votes[i].setVotesNo(cursor.getInt(2));
+                        votes[i].setVotesAbstain(cursor.getInt(3));
+                        votes[i].setSessionId(cursor.getInt(4));
+                    } while (cursor.moveToNext());
+                } catch (Exception e) {
+                    return null;
+                } finally {
+                    if (!cursor.isClosed()) cursor.close();
+                }
+                return votes;
+            default:
+                cursor.close();
+                throw new InvalidTableException("Invalid table name!");
+        }
+    }
+}

@@ -36,4 +36,5 @@
     <string name="VotedYES">Voted YES: %d</string>
     <string name="VotedNO">Voted NO: %d</string>
     <string name="VotedABSTAIN">Voted ABSTAIN: %d</string>
+    <string name="RegistrationSurname">Enter surname</string>
 </resources>

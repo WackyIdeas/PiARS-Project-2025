@@ -40,7 +40,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
-            android:text="@string/RegistrationUsername"
+            android:text="@string/RegistrationIndex"
             android:textAlignment="textEnd" />
 
         <EditText
@@ -62,11 +62,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
-            android:text="@string/RegistrationIndex"
+            android:text="@string/RegistrationName"
             android:textAlignment="textEnd" />
 
         <EditText
-            android:id="@+id/registerIndexTextEdit"
+            android:id="@+id/registerNameTextEdit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.3"
@@ -84,11 +84,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.5"
-            android:text="@string/RegistrationName"
+            android:text="@string/RegistrationSurname"
             android:textAlignment="textEnd" />
 
         <EditText
-            android:id="@+id/registerNameTextEdit"
+            android:id="@+id/registerSurnameTextEdit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0.3"
