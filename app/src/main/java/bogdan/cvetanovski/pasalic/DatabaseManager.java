@@ -48,7 +48,13 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public static final String VotesNo = "VotesNo";
     public static final String VotesAbstain = "VotesAbstain";
 
-
+    private int loggedInID = -1;
+    public void setLoggedInID(int id) {
+        loggedInID = id;
+    }
+    public int getLoggedInID() {
+        return loggedInID;
+    }
     // Use Singleton design pattern for
     private static DatabaseManager sInstance;
 
@@ -148,7 +154,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public Pair<String, Integer> login(String username, String password) {
         SQLiteDatabase db = getReadableDatabase();
         String h = hash(password);
-        Cursor cursor = db.query(USERS_TABLE, new String[]{User_Name, Surname, Role}, Username + "=? AND " + Password + "=?",
+        Cursor cursor = db.query(USERS_TABLE, new String[]{User_Name, Surname, Role, UserID}, Username + "=? AND " + Password + "=?",
                             new String[]{username, h}, null, null, null);
 
         String name_surname = "";
@@ -160,6 +166,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
             name_surname += name;
             if(!surname.isEmpty()) name_surname += " " + surname;
             role = cursor.getInt(2);
+            loggedInID = cursor.getInt(3);
         }
         if(!cursor.isClosed()) cursor.close();
         return new Pair<String, Integer>(name_surname, role);
@@ -195,7 +202,8 @@ public class DatabaseManager extends SQLiteOpenHelper {
             q.put(EndDate, s.getEndDate());
             q.put(Description, s.getDescription());
             db.insert(SESSIONS_TABLE, null, q);
-            // Create a matching votes table
+            // Create a matching votes table, use last_insert_rowid() to get the ID of the newly inserted session
+            // Use raw SQL query for this
             db.execSQL("INSERT INTO " + VOTES_TABLE + " VALUES(NULL, 0, 0, 0, last_insert_rowid())");
             return "";
         } catch (SQLiteException e) {

@@ -43,4 +43,8 @@
     <string name="SessionFormDescription">Description:</string>
     <string name="SessionFormError">Can\'t create a session with an empty name!</string>
     <string name="SessionFormExistsError">Session with this name already exists for this date!</string>
+    <string name="VoteEnded">Voting period has ended</string>
+    <string name="VoteConfirmTitle">Confirm vote decision</string>
+    <string name="VoteConfirmBody">Once you confirm, you won\'t be able to vote again for this session!</string>
+
 </resources>

@@ -5,16 +5,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 public class DatabaseFactory {
-    public static ObjectRow[] getQueryResults(Context c, String table) throws InvalidTableException {
+    public static ObjectRow[] getQueryResults(Context c, String table, String selection, String[] selectionArgs) throws InvalidTableException {
         SQLiteDatabase db = DatabaseManager.getInstance(c).getReadableDatabase();
 
         Cursor cursor;
-        if(table.equals(DatabaseManager.USERS_TABLE)) {
-            // Only get non-admin accounts
-            cursor = db.query(table, null, DatabaseManager.Role + "=0", null, null, null, null);
-        } else {
-            cursor = db.query(table, null, null, null, null, null, null);
-        }
+        cursor = db.query(table, null, selection, selectionArgs, null, null, null);
 
         switch (table) {
             case DatabaseManager.USERS_TABLE:

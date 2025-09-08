@@ -84,4 +84,11 @@
             android:text="@string/VoteAbstain"
             tools:ignore="ButtonStyle" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/submitVoteButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="submitVote"
+        android:text="@string/SubmitButton" />
 </LinearLayout>

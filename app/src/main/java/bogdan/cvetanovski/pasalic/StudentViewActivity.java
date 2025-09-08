@@ -11,9 +11,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 public class StudentViewActivity extends AppCompatActivity {
-
-    ProfileFragment profileFragment;
-    CalendarFragment calendarFragment;
+    String fragmentName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,26 +23,22 @@ public class StudentViewActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        String fragmentName = getIntent().getExtras().getString("studentName");
-        profileFragment = ProfileFragment.newInstance(fragmentName);
-        calendarFragment = CalendarFragment.newInstance();
-        // Keeping both fragments loaded in memory and the buttons simply toggle their visibility
-        getSupportFragmentManager().beginTransaction().add(R.id.fragmentLoader, calendarFragment).commit();
-        getSupportFragmentManager().beginTransaction().add(R.id.fragmentLoader, profileFragment).commit();
-        getSupportFragmentManager().beginTransaction().hide(calendarFragment).commit();
+        fragmentName = getIntent().getExtras().getString("studentName");
+        ProfileFragment frag = ProfileFragment.newInstance(fragmentName);
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragmentLoader, frag).commit();
     }
 
     public void onProfileClicked(View view) {
-        getSupportFragmentManager().beginTransaction().hide(calendarFragment).commit();
-        getSupportFragmentManager().beginTransaction().show(profileFragment).commit();
+        ProfileFragment frag = ProfileFragment.newInstance(fragmentName);
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragmentLoader, frag).commit();
         Button profileButton = findViewById(R.id.profileButton);
         Button calendarButton = findViewById(R.id.calendarButton);
         profileButton.setBackgroundColor(getResources().getColor(R.color.teal_200, this.getTheme()));
         calendarButton.setBackgroundColor(getResources().getColor(R.color.purple_200, this.getTheme()));
     }
     public void onCalendarClicked(View view) {
-        getSupportFragmentManager().beginTransaction().show(calendarFragment).commit();
-        getSupportFragmentManager().beginTransaction().hide(profileFragment).commit();
+        CalendarFragment frag = CalendarFragment.newInstance();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragmentLoader, frag).commit();
         Button profileButton = findViewById(R.id.profileButton);
         Button calendarButton = findViewById(R.id.calendarButton);
         profileButton.setBackgroundColor(getResources().getColor(R.color.purple_200, this.getTheme()));

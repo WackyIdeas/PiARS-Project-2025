@@ -12,8 +12,6 @@ import androidx.core.view.WindowInsetsCompat;
 
 public class AdminActivity extends AppCompatActivity {
 
-    StudentListFragment studentListFragment;
-    SessionListFragment sessionListFragment;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,29 +23,27 @@ public class AdminActivity extends AppCompatActivity {
             return insets;
         });
         // Largely the same as StudentViewActivity
-        studentListFragment = StudentListFragment.newInstance();
-        sessionListFragment = SessionListFragment.newInstance();
-        getSupportFragmentManager().beginTransaction().add(R.id.fragmentLoader2, studentListFragment).commit();
-        getSupportFragmentManager().beginTransaction().add(R.id.fragmentLoader2, sessionListFragment).commit();
-        getSupportFragmentManager().beginTransaction().hide(sessionListFragment).commit();
+        StudentListFragment slf = StudentListFragment.newInstance();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragmentLoader2, slf).commit();
     }
 
     public void onStudentsClicked(View view) {
-        getSupportFragmentManager().beginTransaction().hide(sessionListFragment).commit();
-        getSupportFragmentManager().beginTransaction().show(studentListFragment).commit();
-        studentListFragment.tryNotifyEmptyList(); // Check and notify the user if the student model is empty
+        StudentListFragment slf = StudentListFragment.newInstance();
+        // Replace fragment every time in order to get changes from the database
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragmentLoader2, slf).commitNow();
         Button studentsButton = findViewById(R.id.studentsButton);
         Button sessionsButton = findViewById(R.id.sessionsButton);
         studentsButton.setBackgroundColor(getResources().getColor(R.color.teal_200, this.getTheme()));
         sessionsButton.setBackgroundColor(getResources().getColor(R.color.purple_200, this.getTheme()));
+        slf.tryNotifyEmptyList();
     }
     public void onSessionsClicked(View view) {
-        getSupportFragmentManager().beginTransaction().show(sessionListFragment).commit();
-        getSupportFragmentManager().beginTransaction().hide(studentListFragment).commit();
-        sessionListFragment.tryNotifyEmptyList();
+        SessionListFragment slf = SessionListFragment.newInstance();
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragmentLoader2, slf).commitNow();
         Button studentsButton = findViewById(R.id.studentsButton);
         Button sessionsButton = findViewById(R.id.sessionsButton);
         studentsButton.setBackgroundColor(getResources().getColor(R.color.purple_200, this.getTheme()));
         sessionsButton.setBackgroundColor(getResources().getColor(R.color.teal_200, this.getTheme()));
+        slf.tryNotifyEmptyList();
     }
 }

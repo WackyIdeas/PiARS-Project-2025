@@ -55,7 +55,7 @@ public class StudentAdapter extends BaseAdapter {
 
     void populateModel() {
         try {
-            model = (User[])DatabaseFactory.getQueryResults(context, DatabaseManager.USERS_TABLE);
+            model = (User[])DatabaseFactory.getQueryResults(context, DatabaseManager.USERS_TABLE, DatabaseManager.Role + "=0", null);
         } catch (InvalidTableException e) {
             throw new RuntimeException(e);
         }

@@ -23,6 +23,16 @@ public class SessionAdapter extends BaseAdapter {
     LayoutInflater layoutInflater;
     Context context;
     protected Session[] model;
+
+    String selectionFilter;
+    String[] selectionFilterArgs;
+
+    public void setSelectionFilterArgs(String[] args) {
+        selectionFilterArgs = args;
+        populateModel(selectionFilter, selectionFilterArgs);
+        notifyDataSetChanged();
+    }
+
     @Override
     public int getCount() {
         if(model == null) return 0;
@@ -44,28 +54,36 @@ public class SessionAdapter extends BaseAdapter {
     public void removeItem(int index) {
         String msg = DatabaseManager.getInstance(context).removeItem(DatabaseManager.SESSIONS_TABLE, DatabaseManager.SessionID, index);
         if(!msg.isEmpty()) Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
-        populateModel();
+        populateModel(selectionFilter, selectionFilterArgs);
         // Update the adapter as the underlying data model is changed
         notifyDataSetChanged();
     }
     public void addItem(Session s) {
         String result = DatabaseManager.getInstance(context).addSession(context, s);
         if(!result.isEmpty()) Toast.makeText(context, result, Toast.LENGTH_LONG).show();
-        populateModel();
+        populateModel(selectionFilter, selectionFilterArgs);
         notifyDataSetChanged();
     }
 
-    void populateModel() {
+    void populateModel(String selection, String[] selectionArgs) {
         try {
-            model = (Session[])DatabaseFactory.getQueryResults(context, DatabaseManager.SESSIONS_TABLE);
+            model = (Session[])DatabaseFactory.getQueryResults(context, DatabaseManager.SESSIONS_TABLE, selection, selectionArgs);
         } catch (InvalidTableException e) {
             throw new RuntimeException(e);
         }
     }
+    public SessionAdapter(Context c, LayoutInflater inflater, String selection, String[] selectionArgs) {
+        layoutInflater = inflater;
+        context = c;
+        selectionFilter = selection;
+        selectionFilterArgs = selectionArgs;
+        populateModel(selectionFilter, selectionFilterArgs);
+    }
+
     public SessionAdapter(Context c, LayoutInflater inflater) {
         layoutInflater = inflater;
         context = c;
-        populateModel();
+        populateModel(selectionFilter, selectionFilterArgs);
     }
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {

@@ -1,5 +1,6 @@
 package bogdan.cvetanovski.pasalic;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -9,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CalendarView;
+import android.widget.ListView;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -25,6 +27,9 @@ public class CalendarFragment extends Fragment {
     public CalendarFragment() {
         // Required empty public constructor
     }
+    public SessionAdapter adapterModel;
+    Context context;
+    private LocalDate selectedDate;
 
     public static CalendarFragment newInstance() {
         return new CalendarFragment();
@@ -40,32 +45,32 @@ public class CalendarFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_calendar, container, false);
+        context = getActivity();
+        selectedDate = LocalDate.now();
+        adapterModel = new SessionAdapter(context, inflater, DatabaseManager.Date+"=?", new String[]{ selectedDate.toString() });
+        ListView listView = v.findViewById(R.id.sessionListView);
+        listView.setAdapter(adapterModel);
+
         // Add event handler for OnDateChangeListener
         // https://developer.android.com/reference/android/widget/CalendarView.OnDateChangeListener
-        CalendarView cv = v.findViewById(R.id.calendarView);
-        cv.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
-            /*
-             * For now, assume that any session has a time limit of
-             * 2 weeks. Use ChronoUnit to calculate difference between
-             * two dates.
-             * https://docs.oracle.com/javase/8/docs/api/java/time/temporal/ChronoUnit.html
-             */
-            LocalDate date = LocalDate.of(year, month+1, dayOfMonth);
-            LocalDate expiryDate = date.plusWeeks(2);
-            long daysBetween = ChronoUnit.DAYS.between(date, expiryDate);
-            // Use DateTimeFormatter to get localized date format instead of ISO date
-            DateTimeFormatter dtf = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT);
-
-            Intent intent = new Intent(getActivity(), DecideActivity.class);
+        CalendarView calendar = v.findViewById(R.id.calendarView);
+        calendar.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
+            selectedDate = LocalDate.of(year, month+1, dayOfMonth); // Month weirdly enough takes values in the range [0, 11]
+            adapterModel.setSelectionFilterArgs(new String[]{ selectedDate.toString() });
+        });
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            Intent intent = new Intent(this.getActivity(), DecideActivity.class);
             Bundle params = new Bundle();
-            // Placeholder values
-            params.putLong("daysLeft", daysBetween);
-            params.putInt("sessionNumber", 1);
-            params.putString("sessionDate", date.format(dtf));
-            params.putString("description", "Sample description");
+            Session s = (Session)adapterModel.getItem(position);
+            params.putInt("sessionID", (int)id);
+            params.putString("description", s.getDescription());
+            params.putString("sessionName", s.getName());
+            params.putString("sessionDate", s.getDate());
+            params.putString("endDate", s.getEndDate());
             intent.putExtras(params);
             startActivity(intent);
         });
+
         return v;
     }
 }

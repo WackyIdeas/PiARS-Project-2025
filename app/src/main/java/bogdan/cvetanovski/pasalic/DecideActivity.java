@@ -1,5 +1,6 @@
 package bogdan.cvetanovski.pasalic;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -11,12 +12,16 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+
 public class DecideActivity extends AppCompatActivity {
 
-    int sessionNumber;
+    int sessionID;
+    String sessionName;
     String description;
     String sessionDate;
-    long daysLeft;
+    String endDate;
 
     // Keep track of which button is pressed from the button group
     int[] buttonGroup = {
@@ -39,9 +44,10 @@ public class DecideActivity extends AppCompatActivity {
         });
 
         description = getIntent().getExtras().getString("description");
+        sessionName = getIntent().getExtras().getString("sessionName");
+        sessionID = getIntent().getExtras().getInt("sessionID");
         sessionDate = getIntent().getExtras().getString("sessionDate");
-        daysLeft = getIntent().getExtras().getLong("daysLeft");
-        sessionNumber = getIntent().getExtras().getInt("sessionNumber");
+        endDate = getIntent().getExtras().getString("endDate");
 
         // Update UI with the passed information
         TextView tv = findViewById(R.id.descriptionText);
@@ -49,18 +55,64 @@ public class DecideActivity extends AppCompatActivity {
         tv.setText(result);
 
         tv = findViewById(R.id.sessionTitle);
-        result = getResources().getString(R.string.SessionText, sessionNumber);
+        result = sessionName;
         tv.setText(result);
 
         tv = findViewById(R.id.dateText);
         result = getResources().getString(R.string.SessionDateText, sessionDate);
         tv.setText(result);
 
+        LocalDate endingDate = LocalDate.parse(endDate);
+        LocalDate today = LocalDate.now();
+
+        long daysBetween = ChronoUnit.DAYS.between(today, endingDate);
         tv = findViewById(R.id.timeLeftText);
-        result = getResources().getString(R.string.TimeLeftText, daysLeft, daysLeft == 1 ? "" : "s");
+        if(daysBetween <= 0) { // Disable all buttons and notify that the voting period has ended
+            result = getResources().getString(R.string.VoteEnded);
+            for (int j : buttonGroup) {
+                Button b = findViewById(j);
+                b.setEnabled(false);
+            }
+            Button b = findViewById(R.id.submitVoteButton);
+            b.setEnabled(false);
+        } else {
+            result = getResources().getString(R.string.TimeLeftText, daysBetween, daysBetween == 1 ? "" : "s");
+        }
         tv.setText(result);
     }
 
+    public void submitVote(View view) {
+        // Finalize vote decision
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        String title = getResources().getString(R.string.VoteConfirmTitle);
+        String text = getResources().getString(R.string.VoteConfirmBody);
+        String stringYes = getResources().getString(R.string.VoteYes);
+        String stringNo = getResources().getString(R.string.VoteNo);
+        builder.setTitle(title);
+        builder.setMessage(text);
+        builder.setCancelable(true);
+        builder.setPositiveButton(stringYes, (dialog, which) -> {
+            // Do voting shenanigans here
+            try {
+                User[] user = (User[])DatabaseFactory.getQueryResults(this, DatabaseManager.USERS_TABLE,
+                        DatabaseManager.UserID+"="+String.valueOf(DatabaseManager.getInstance(this).getLoggedInID()), null);
+
+                if(user != null) {
+                    if(user.length != 1) {
+                        throw new RuntimeException();
+                    }
+
+
+                }
+            } catch (InvalidTableException e) {
+                throw new RuntimeException(e);
+            }
+
+        });
+        builder.setNegativeButton(stringNo, (dialog, which) -> dialog.cancel());
+        AlertDialog d = builder.create();
+        d.show();
+    }
     public void castVote(View view) {
         // onClick event handler provides the button that was clicked
         selectedButton = view.getId();
