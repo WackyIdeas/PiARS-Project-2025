@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Pair;
 import android.widget.Toast;
@@ -147,7 +148,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public Pair<String, Integer> login(String username, String password) {
         SQLiteDatabase db = getReadableDatabase();
         String h = hash(password);
-        Cursor cursor = db.query(USERS_TABLE, new String[]{User_Name, Surname, Role}, User_Name + "=? AND " + Password + "=?",
+        Cursor cursor = db.query(USERS_TABLE, new String[]{User_Name, Surname, Role}, Username + "=? AND " + Password + "=?",
                             new String[]{username, h}, null, null, null);
 
         String name_surname = "";
@@ -157,11 +158,71 @@ public class DatabaseManager extends SQLiteOpenHelper {
             String name = cursor.getString(0);
             String surname = cursor.getString(1);
             name_surname += name;
-            if(surname.isEmpty()) name_surname += " " + surname;
+            if(!surname.isEmpty()) name_surname += " " + surname;
             role = cursor.getInt(2);
         }
         if(!cursor.isClosed()) cursor.close();
         return new Pair<String, Integer>(name_surname, role);
+    }
+
+    public String removeItem(String table, String idQual, int id) {
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            db.delete(table, idQual+"="+String.valueOf(id), null);
+            return "";
+        } catch (SQLiteException e) {
+            return e.getMessage();
+        }
+    }
+
+    public String addSession(Context c, Session s) {
+        SQLiteDatabase db = getWritableDatabase();
+        try {
+            // Check if session with the same name already exists for the given date
+            Cursor cursor = db.query(SESSIONS_TABLE, null, Session_Name+"=? AND "+Date+"=?",
+                                     new String[]{ s.getName(), s.getDate() }, null, null, null);
+            // If one already exists, throw error
+            if(cursor.getCount() > 0) {
+                if(!cursor.isClosed()) cursor.close();
+                return c.getString(R.string.SessionFormExistsError);
+            }
+            if(!cursor.isClosed()) cursor.close();
+
+            ContentValues q = new ContentValues();
+            q.putNull(SessionID);
+            q.put(Session_Name, s.getName());
+            q.put(Date, s.getDate());
+            q.put(EndDate, s.getEndDate());
+            q.put(Description, s.getDescription());
+            db.insert(SESSIONS_TABLE, null, q);
+            // Create a matching votes table
+            db.execSQL("INSERT INTO " + VOTES_TABLE + " VALUES(NULL, 0, 0, 0, last_insert_rowid())");
+            return "";
+        } catch (SQLiteException e) {
+            return e.getMessage();
+        }
+    }
+
+    public Vote getResults(int sessionID) {
+        SQLiteDatabase db = getReadableDatabase();
+        try {
+            Cursor cursor = db.query(VOTES_TABLE, null, SessionID+"="+String.valueOf(sessionID), null, null, null, null);
+            if(cursor.getCount() == 0) {
+                if(!cursor.isClosed()) cursor.close();
+                return null;
+            }
+            Vote v = new Vote();
+            cursor.moveToFirst();
+            v.setId(cursor.getInt(0));
+            v.setVotesYes(cursor.getInt(1));
+            v.setVotesNo(cursor.getInt(2));
+            v.setVotesAbstain(cursor.getInt(3));
+            v.setSessionId(cursor.getInt(4));
+            if(!cursor.isClosed()) cursor.close();
+            return v;
+        } catch (SQLiteException e) {
+            return null;
+        }
     }
 
     @Override
@@ -196,10 +257,9 @@ public class DatabaseManager extends SQLiteOpenHelper {
         String hexdigits = "0123456789ABCDEF";
         for(int i = 0; i < h.length; i++) {
             char val = (char)(h[i] & 0xFF); // Force interpret the value as unsigned, since Java doesn't directly support unsigned values
-            result[i * 2] = hexdigits.charAt(val >>> 4); // 0xF0 portion
+            result[i * 2] = hexdigits.charAt(val >>> 4); // 0xF0 portion, shifted by 4 bits
             result[i * 2 + 1] = hexdigits.charAt(val & 0x0F); // 0x0F portion
         }
-        System.out.println(new String(result));
         return new String(result);
     }
 }

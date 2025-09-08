@@ -3,6 +3,9 @@ package bogdan.cvetanovski.pasalic;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -39,8 +42,55 @@ public class RegisterActivity extends AppCompatActivity {
      * starting activity.
      */
     public void enterLoginPage(View view) {
-        //Intent intent = new Intent(this, LoginActivity.class);
-        //startActivity(intent);
-        finish();
+
+        EditText v_username = findViewById(R.id.registerUsernameTextEdit);
+        EditText v_name = findViewById(R.id.registerNameTextEdit);
+        EditText v_surname = findViewById(R.id.registerSurnameTextEdit);
+        EditText v_password = findViewById(R.id.registerPasswordTextEdit);
+
+        String username = v_username.getText().toString().trim();
+        String name = v_name.getText().toString().trim();
+        String surname = v_surname.getText().toString().trim();
+        String password = v_password.getText().toString().trim();
+
+        if(username.isEmpty()) {
+            makeToast(R.string.RegistrationFailedEmptyEntry, R.string.RegistrationIndex);
+            return;
+        } else if(name.isEmpty()) {
+            makeToast(R.string.RegistrationFailedEmptyEntry, R.string.RegistrationName);
+            return;
+        } else if(password.isEmpty()) {
+            makeToast(R.string.RegistrationFailedEmptyEntry, R.string.RegistrationPassword);
+            return;
+        }
+
+        User user = new User();
+        user.setRole(username.startsWith("!") ? 1 : 0);
+        user.setName(name);
+        user.setSurname(surname);
+        user.setHash(password);
+        user.setUsername(user.getRole() == 1 ? username.substring(1) : username);
+
+        String msg = DatabaseManager.getInstance(this).registerUser(user);
+        if(msg.isEmpty()) {
+            makeToast(R.string.RegistrationSuccess, -1);
+            finish();
+        } else {
+            makeToast(msg);
+        }
+    }
+
+    public void makeToast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+    }
+    public void makeToast(int stringRes, int entry) {
+        String toastText;
+        if(entry != -1) {
+            String entryText = getResources().getString(entry);
+            toastText = getResources().getString(stringRes, entryText.substring(entryText.indexOf(' ')+1));
+        } else {
+            toastText = getResources().getString(stringRes);
+        }
+        makeToast(toastText);
     }
 }

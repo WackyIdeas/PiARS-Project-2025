@@ -1,6 +1,7 @@
 package bogdan.cvetanovski.pasalic;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,6 +9,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.CheckBox;
+import android.widget.Toast;
 
 /*
  * StudentAdapter acts as a bridge between the data set and the
@@ -19,36 +21,51 @@ import android.widget.CheckBox;
 public class StudentAdapter extends BaseAdapter {
 
     LayoutInflater layoutInflater;
-    protected StudentModel model;
+    Context context;
+    //protected StudentModel model;
+
+    protected User[] model;
     @Override
     public int getCount() {
-        return model.size();
+        if(model == null) return 0;
+        return model.length;
     }
 
     @Override
     public Object getItem(int position) {
-        return model.getItem(position);
-    }
-
-    public Object getItem(String index) {
-        return model.getItem(index);
+        if(model == null) return null;
+        if(position < 0 || position >= model.length) return null;
+        return model[position];
     }
 
     @Override
     public long getItemId(int position) {
-        return model.getItem(position).getIndex().hashCode();
+        if(model == null) return -1;
+        if(position < 0 || position >= model.length) return -1;
+        return model[position].getId();
     }
 
-    public void removeItem(String index) {
-        model.removeItem(index);
+    public void removeItem(int index) {
+        String msg = DatabaseManager.getInstance(context).removeItem(DatabaseManager.USERS_TABLE, DatabaseManager.UserID, index);
+        if(!msg.isEmpty()) Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+        populateModel();
         // Update the adapter as the underlying data model is changed
         notifyDataSetChanged();
     }
 
+    void populateModel() {
+        try {
+            model = (User[])DatabaseFactory.getQueryResults(context, DatabaseManager.USERS_TABLE);
+        } catch (InvalidTableException e) {
+            throw new RuntimeException(e);
+        }
+    }
     // LayoutInflater is required to instantiate the ListView's delegate items
-    public StudentAdapter(LayoutInflater inflater) {
+    public StudentAdapter(Context c, LayoutInflater inflater) {
         layoutInflater = inflater;
-        model = new StudentModel();
+        context = c;
+        // Load from database
+        populateModel();
     }
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -61,17 +78,17 @@ public class StudentAdapter extends BaseAdapter {
         TextView index = convertView.findViewById(R.id.index);
         CheckBox selected = convertView.findViewById(R.id.selection);
 
-        int imgRes = model.getItem(position).getImage();
+        studentPhoto.setImageResource(R.drawable.baseline_person_48);
+        /*int imgRes = model.getItem(position).getImage();
         if(imgRes != -1) {
             studentPhoto.setImageResource(imgRes);
         } else {
             // Use default image if nothing is provided. Also fixes issue with recycling delegate items
-            studentPhoto.setImageResource(R.drawable.baseline_person_48);
-        }
+        }*/
 
-        String nameStr = model.getItem(position).getFirstName() + " " + model.getItem(position).getLastName();
+        String nameStr = model[position].getName() + " " + model[position].getSurname();
         name.setText(nameStr);
-        index.setText(model.getItem(position).getIndex());
+        index.setText(model[position].getUsername());
 
         selected.setOnClickListener(v -> {
             // Use AlertDialog Builder to set up an alert dialog for deletion
@@ -84,7 +101,7 @@ public class StudentAdapter extends BaseAdapter {
             builder.setMessage(text);
             builder.setCancelable(true);
             builder.setPositiveButton(stringYes, (dialog, which) -> {
-                removeItem(model.getItem(position).getIndex());
+                removeItem(model[position].getId());
                 selected.setChecked(false);
             });
             builder.setNegativeButton(stringNo, (dialog, which) -> {

@@ -32,7 +32,6 @@ public class AdminActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction().hide(sessionListFragment).commit();
     }
 
-
     public void onStudentsClicked(View view) {
         getSupportFragmentManager().beginTransaction().hide(sessionListFragment).commit();
         getSupportFragmentManager().beginTransaction().show(studentListFragment).commit();

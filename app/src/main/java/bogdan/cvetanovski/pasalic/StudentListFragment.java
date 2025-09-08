@@ -34,21 +34,28 @@ public class StudentListFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View result = inflater.inflate(R.layout.fragment_student_list, container, false);
-        adapterModel = new StudentAdapter(inflater);
+        adapterModel = new StudentAdapter(getActivity(), inflater);
 
         ListView listView = result.findViewById(R.id.studentListView);
         listView.setAdapter(adapterModel); // Set the initialized adapter to the ListView
 
-        tryNotifyEmptyList();
+        StudentListFragment ref = this;
         // Add event listener for when the underlying data model is changed
         adapterModel.registerDataSetObserver(new DataSetObserver() {
             @Override
             public void onChanged() {
                 super.onChanged();
-                tryNotifyEmptyList();
+                if(!ref.isHidden()) tryNotifyEmptyList();
             }
         });
+        //tryNotifyEmptyList();
 
         return result;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        adapterModel.notifyDataSetChanged();
     }
 }

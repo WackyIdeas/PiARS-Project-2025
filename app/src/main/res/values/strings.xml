@@ -37,4 +37,10 @@
     <string name="VotedNO">Voted NO: %d</string>
     <string name="VotedABSTAIN">Voted ABSTAIN: %d</string>
     <string name="RegistrationSurname">Enter surname</string>
+    <string name="RegistrationFailedEmptyEntry">Cannot register with an empty %s!</string>
+    <string name="RegistrationSuccess">Registration successful!</string>
+    <string name="SessionFormName">Name:</string>
+    <string name="SessionFormDescription">Description:</string>
+    <string name="SessionFormError">Can\'t create a session with an empty name!</string>
+    <string name="SessionFormExistsError">Session with this name already exists for this date!</string>
 </resources>

@@ -2,6 +2,7 @@ package bogdan.cvetanovski.pasalic;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Pair;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -37,31 +38,25 @@ public class LoginActivity extends AppCompatActivity {
         EditText nameInput = findViewById(R.id.usernameTextEdit);
         EditText passInput = findViewById(R.id.passwordTextEdit);
 
-        /*
-         * Currently only allow login access for two fake users:
-         * 1. student / student
-         * 2. admin / admin
-         * If logging in as an admin, show a completely different
-         * activity.
-         */
-        if(nameInput.getText().toString().equals("student") &&
-           passInput.getText().toString().equals("student")) {
-            // Enter student page
-            Intent intent = new Intent(this, StudentViewActivity.class);
-            Bundle params = new Bundle();
-            params.putString("studentName", nameInput.getText().toString());
-            intent.putExtras(params);
-            startActivity(intent);
-        } else if(nameInput.getText().toString().equals("admin") &&
-                  passInput.getText().toString().equals("admin")) {
-            // Enter admin page
-            Intent intent = new Intent(this, AdminActivity.class);
-            startActivity(intent);
+        Pair<String, Integer> result = DatabaseManager.getInstance(this).login(nameInput.getText().toString().trim(), passInput.getText().toString().trim());
+        if(result.second != -1) {
+            if(result.second == 1) {
+                // Enter admin page
+                Intent intent = new Intent(this, AdminActivity.class);
+                startActivity(intent);
+            } else {
+                Intent intent = new Intent(this, StudentViewActivity.class);
+                Bundle params = new Bundle();
+                params.putString("studentName", result.first);
+                intent.putExtras(params);
+                startActivity(intent);
+            }
         } else {
             // Login failed, notify user about it
             // https://developer.android.com/guide/topics/ui/notifiers/toasts
             String toastText = getResources().getString(R.string.LoginFailedToast);
             Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
+
         }
     }
 }
