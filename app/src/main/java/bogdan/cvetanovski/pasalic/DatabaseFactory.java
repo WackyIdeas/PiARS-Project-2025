@@ -4,6 +4,16 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+/*
+ * Factory class for fetching data from the database.
+ * Returns an array of objects corresponding to rows of the resulting query,
+ * based on selection filters (WHERE clauses).
+ *
+ * Throws an InvalidTableException if passing an unknown table name.
+ * The table name should always be fetched from DatabaseManager.
+ *
+ * TODO: Implement sorting
+ */
 public class DatabaseFactory {
     public static ObjectRow[] getQueryResults(Context c, String table, String selection, String[] selectionArgs) throws InvalidTableException {
         SQLiteDatabase db = DatabaseManager.getInstance(c).getReadableDatabase();
@@ -96,7 +106,7 @@ public class DatabaseFactory {
                 }
                 return voteHashes;
             default:
-                cursor.close();
+                if (!cursor.isClosed()) cursor.close();
                 throw new InvalidTableException("Invalid table name!");
         }
     }

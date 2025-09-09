@@ -25,6 +25,7 @@ public class LoginActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        // Reset intermediate hash value as the user enters this page
         DatabaseManager.getInstance(this).resetCredentials();
     }
 
@@ -45,6 +46,7 @@ public class LoginActivity extends AppCompatActivity {
         EditText nameInput = findViewById(R.id.usernameTextEdit);
         EditText passInput = findViewById(R.id.passwordTextEdit);
 
+        // Trim input
         Pair<String, Integer> result = DatabaseManager.getInstance(this).login(nameInput.getText().toString().trim(), passInput.getText().toString().trim());
         if(result.second != -1) {
             if(result.second == 1) {

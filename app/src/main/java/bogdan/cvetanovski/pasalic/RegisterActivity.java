@@ -48,11 +48,13 @@ public class RegisterActivity extends AppCompatActivity {
         EditText v_surname = findViewById(R.id.registerSurnameTextEdit);
         EditText v_password = findViewById(R.id.registerPasswordTextEdit);
 
+        // Trim all inputs to prevent potential input errors
         String username = v_username.getText().toString().trim();
         String name = v_name.getText().toString().trim();
         String surname = v_surname.getText().toString().trim();
         String password = v_password.getText().toString().trim();
 
+        // Notify the user that a mandatory field is empty
         if(username.isEmpty()) {
             makeToast(R.string.RegistrationFailedEmptyEntry, R.string.RegistrationIndex);
             return;
@@ -65,11 +67,12 @@ public class RegisterActivity extends AppCompatActivity {
         }
 
         User user = new User();
-        user.setRole(username.startsWith("!") ? 1 : 0);
+        // Hack: usernames with a ! prefix will be treated as admin accounts, omitting the ! upon registration
+        user.setRole(username.startsWith("!") ? DatabaseManager.ADMIN_ROLE : DatabaseManager.STUDENT_ROLE);
         user.setName(name);
         user.setSurname(surname);
         user.setHash(password);
-        user.setUsername(user.getRole() == 1 ? username.substring(1) : username);
+        user.setUsername(user.getRole() == DatabaseManager.ADMIN_ROLE ? username.substring(1) : username);
 
         String msg = DatabaseManager.getInstance(this).registerUser(user);
         if(msg.isEmpty()) {

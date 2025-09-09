@@ -44,6 +44,7 @@ public class ResultsActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Update the vote scores on resume as well
         updateResults();
     }
 }

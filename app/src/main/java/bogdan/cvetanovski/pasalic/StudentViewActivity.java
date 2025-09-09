@@ -24,6 +24,8 @@ public class StudentViewActivity extends AppCompatActivity {
             return insets;
         });
         fragmentName = getIntent().getExtras().getString("studentName");
+
+        // Replace fragments every time in order to also get updates in case the database is changed
         ProfileFragment frag = ProfileFragment.newInstance(fragmentName);
         getSupportFragmentManager().beginTransaction().replace(R.id.fragmentLoader, frag).commit();
     }

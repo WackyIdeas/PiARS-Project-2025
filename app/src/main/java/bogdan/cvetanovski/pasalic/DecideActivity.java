@@ -71,10 +71,13 @@ public class DecideActivity extends AppCompatActivity {
         long daysBetween = ChronoUnit.DAYS.between(today, endingDate);
         tv = findViewById(R.id.timeLeftText);
 
+        // Check if the user has voted before for the given session
+        // This is done to prevent abuse of the voting system, while
+        // attempting to anonymize each user who voted.
         boolean canVote = false;
         try {
             Vote[] votes = (Vote[])DatabaseFactory.getQueryResults(this, DatabaseManager.VOTES_TABLE,
-                    DatabaseManager.SessionID + "=" + String.valueOf(sessionID), null);
+                    DatabaseManager.SessionID + "=" + sessionID, null);
             if(votes != null && votes.length > 0) {
                 voteID = votes[0].getId();
                 canVote = DatabaseManager.getInstance(this).canVote(this, voteID);
@@ -83,6 +86,7 @@ public class DecideActivity extends AppCompatActivity {
             throw new RuntimeException(e);
         }
 
+        // Disable the submit button by default
         Button b = findViewById(R.id.submitVoteButton);
         b.setEnabled(false);
         if(!canVote) {
@@ -116,18 +120,19 @@ public class DecideActivity extends AppCompatActivity {
         builder.setMessage(text);
         builder.setCancelable(true);
         builder.setPositiveButton(stringYes, (dialog, which) -> {
-            // Do voting shenanigans here
             DatabaseManager.VoteDecision vote;
             if(selectedButton == R.id.yesButton) vote = DatabaseManager.VoteDecision.YES;
             else if(selectedButton == R.id.noButton) vote = DatabaseManager.VoteDecision.NO;
             else if(selectedButton == R.id.abstainButton) vote = DatabaseManager.VoteDecision.ABSTAIN;
             else {
+                // If, somehow, selectedButton is invalid, throw an error
                 String toastText = getResources().getString(R.string.VoteError);
                 Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
                 dialog.cancel();
                 return;
             }
 
+            // Perform the vote itself
             String msg = DatabaseManager.getInstance(this).castVote(voteID,vote);
             if(!msg.isEmpty()) {
                 Toast.makeText(this, msg, Toast.LENGTH_LONG).show();

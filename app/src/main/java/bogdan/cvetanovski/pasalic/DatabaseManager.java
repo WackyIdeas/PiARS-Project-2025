@@ -8,24 +8,29 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Pair;
-import android.widget.Toast;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.PreparedStatement;
 
+/*
+ * This is the database helper class which manages the
+ * underlying local database. This class also manages
+ * session information
+ */
 public class DatabaseManager extends SQLiteOpenHelper {
 
+    // Database filename as stored in /data/data/package.name/databases
     private static final String DATABASE_NAME = "decideit_table";
     private static final int DATABASE_VERSION = 1;
 
+    // Names of all tables in the database
     public static final String USERS_TABLE = "Users";
     public static final String SESSIONS_TABLE = "Sessions";
     public static final String VOTES_TABLE = "Votes";
     public static final String VOTESAFETY_TABLE = "VoteSafety";
 
-    // User table
+    // User table columns
     public static final String UserID = "UserID";
     public static final String User_Name = "Name";
     public static final String Surname = "Surname";
@@ -36,82 +41,100 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public static final int STUDENT_ROLE = 0;
     public static final int ADMIN_ROLE = 1;
 
-    // Sessions table
+    // Sessions table columns
     public static final String SessionID = "SessionID";
     public static final String Date = "Date";
     public static final String Session_Name = "Name";
     public static final String Description = "Description";
     public static final String EndDate = "EndDate";
 
-    // Votes table
+    // Votes table columns
     public static final String VoteID = "VoteID";
     public static final String VotesYes = "VotesYes";
     public static final String VotesNo = "VotesNo";
     public static final String VotesAbstain = "VotesAbstain";
 
+    // VoteSafety table columns
     public static final String VoteSafetyID = "VoteSafetyID";
     public static final String Hash = "Hash";
 
-
-
-    private int loggedInID = -1;
+    /*
+     * Store an intermediate hash used for vote spam prevention.
+     * See generateIntermediateUserID(String, String) for more details.
+     */
     public void resetCredentials() {
-        loggedInID = -1;
         intermediateUserID = "";
-    }
-    public int getLoggedInID() {
-        return loggedInID;
     }
 
     private String intermediateUserID = "";
 
-    // Use Singleton design pattern for
-    private static DatabaseManager sInstance;
-
     /*
-        SQLite commands:
+        SQLite commands for creating the relevant tables.
 
-           CREATE TABLE Users (
-               UserID INTEGER PRIMARY KEY,
-               Name TEXT NOT NULL,
-               Surname TEXT,
-               Username TEXT NOT NULL UNIQUE,
-               Password TEXT NOT NULL,
-               Role INTEGER NOT NULL CHECK(Role >= 0 AND Role < 2)
-           );
+        Notes:
+            Users:
+            - Surname is optional
+            - The role is limited to values [0, 1], 0 meaning student,
+              1 meaning admin role.
+            Sessions:
+            - Use CHECK constraint to ensure the EndDate doesn't come before Date
+            Votes:
+            - VotesYes, VotesNo, VotesAbstain are all non-negative.
+            - Establish foreign key relationship between Votes and Sessions
+            - Also delete all corresponding rows in cascade to a session being
+              deleted
+            VoteSafety:
+            - Establish foreign key relationship between VoteSafety and Votes
+            - Also delete all corresponding rows in cascade to a vote row being
+              deleted
 
-           CREATE TABLE Sessions (
-                SessionID INTEGER PRIMARY KEY,
-                Date TEXT NOT NULL,
-                Name TEXT NOT NULL,
-                Description TEXT,
-                EndDate TEXT NOT NULL,
-                CHECK(Date < EndDate)
-           );
+        CREATE TABLE Users (
+            UserID INTEGER PRIMARY KEY,
+            Name TEXT NOT NULL,
+            Surname TEXT,
+            Username TEXT NOT NULL UNIQUE,
+            Password TEXT NOT NULL,
+            Role INTEGER NOT NULL CHECK(Role >= 0 AND Role < 2)
+        );
 
-           CREATE TABLE Votes (
-                VoteID INTEGER PRIMARY KEY,
-                VotesYes INTEGER NOT NULL CHECK(VotesYes >= 0),
-                VotesNo INTEGER NOT NULL CHECK(VotesNo >= 0),
-                VotesAbstain INTEGER NOT NULL CHECK(VotesAbstain >= 0),
-                SessionID INTEGER NOT NULL UNIQUE,
-                FOREIGN KEY (SessionID) REFERENCES Sessions(SessionID) ON DELETE CASCADE
-           );
+        CREATE TABLE Sessions (
+             SessionID INTEGER PRIMARY KEY,
+             Date TEXT NOT NULL,
+             Name TEXT NOT NULL,
+             Description TEXT,
+             EndDate TEXT NOT NULL,
+             CHECK(Date < EndDate)
+        );
 
-           CREATE TABLE VoteSafety (
-                VoteSafetyID INTEGER PRIMARY KEY,
-                Hash TEXT NOT NULL UNIQUE,
-                VoteID INTEGER NOT NULL,
-                FOREIGN KEY (VoteID) REFERENCES Votes(VoteID) ON DELETE CASCADE
-           );
+        CREATE TABLE Votes (
+             VoteID INTEGER PRIMARY KEY,
+             VotesYes INTEGER NOT NULL CHECK(VotesYes >= 0),
+             VotesNo INTEGER NOT NULL CHECK(VotesNo >= 0),
+             VotesAbstain INTEGER NOT NULL CHECK(VotesAbstain >= 0),
+             SessionID INTEGER NOT NULL UNIQUE,
+             FOREIGN KEY (SessionID) REFERENCES Sessions(SessionID) ON DELETE CASCADE
+        );
+
+        CREATE TABLE VoteSafety (
+             VoteSafetyID INTEGER PRIMARY KEY,
+             Hash TEXT NOT NULL UNIQUE,
+             VoteID INTEGER NOT NULL,
+             FOREIGN KEY (VoteID) REFERENCES Votes(VoteID) ON DELETE CASCADE
+        );
 
      */
 
+    /*
+     * Use Singleton design pattern for accessing database functionality across
+     * the codebase. Use synchronized keyword to prevent potential thread-related
+     * issues.
+     */
+    private static DatabaseManager dbInstance;
     public static synchronized DatabaseManager getInstance(Context context) {
-        if (sInstance == null) {
-            sInstance = new DatabaseManager(context.getApplicationContext());
+        if (dbInstance == null) {
+            dbInstance = new DatabaseManager(context.getApplicationContext());
         }
-        return sInstance;
+        return dbInstance;
     }
 
     private DatabaseManager(Context context) {
@@ -120,6 +143,10 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
+        /*
+         * This runs only when the application determines that
+         * there is no database file in /data/data/package.name/databases
+         */
         String userTable =
                 "CREATE TABLE " + USERS_TABLE + " (" +
                     UserID + " INTEGER PRIMARY KEY," +
@@ -157,16 +184,28 @@ public class DatabaseManager extends SQLiteOpenHelper {
         db.execSQL(voteSafetyTable);
     }
 
+    /*
+     * Attempt to register the user to the database.
+     * Return String as a potential message for UI elements to
+     * display to the user via Toasts or other means.
+     *
+     * This query can fail in the following cases:
+     * - Providing null values for username, name, password, etc.
+     * - Providing a username that already exists (UNIQUE constraint)
+     * - Generic database errors (bad permissions, etc.)
+     *
+     */
     public String registerUser(User u) {
         String msg = "";
         SQLiteDatabase db = getWritableDatabase();
         try {
+            // Use ContentValues to provide data to the insert query
             ContentValues q = new ContentValues();
-            q.putNull(UserID);
+            q.putNull(UserID); // Let SQLite figure out the new ID for the user
             q.put(User_Name, u.getName());
             q.put(Surname, u.getSurname());
             q.put(Username, u.getUsername());
-            q.put(Password, hash(u.getHash()));
+            q.put(Password, hash(u.getHash())); // Store password as a SHA-256 hash
             q.put(Role, u.getRole());
             db.insertOrThrow(USERS_TABLE, null, q);
         } catch (SQLException e) { // Rely on database for sanity checks
@@ -174,15 +213,40 @@ public class DatabaseManager extends SQLiteOpenHelper {
         }
         return msg;
     }
+    /*
+     * Generate an intermediate hash that will be used to verify that the user has
+     * already voted, with the goal to make it very difficult to trace back the
+     * cast vote to the corresponding user. This is an intermediate hash value as
+     * the final hash stored in the database will additionally rely on the vote ID
+     * as well.
+     *
+     * result = hash( hash(|username| + username) + hash(|pass| + pass) + voteID )
+     *
+     * We use the vote ID in order to further alter the hash for every
+     * individual vote, making it more difficult to identify the user.
+     *
+     * Additionally, the extra table doesn't store information about the vote
+     * decision.
+     *
+     */
     private String generateIntermediateUserID(String s1, String s2) {
         String q = s1.length() + s1;
         String p = s2.length() + s2;
         return hash(q) + hash(p);
     }
-    // Role value of -1 is assumed to be a failed login
+    /*
+     * Attempt to authenticate the user at the login activity.
+     * On success, return Name+Surname and the role of the user,
+     * which will decide the application's next activity.
+     *
+     * On failure, return an empty string and -1, the login activity
+     * should notify the user that authentication has failed.
+     *
+     */
     public Pair<String, Integer> login(String username, String password) {
         SQLiteDatabase db = getReadableDatabase();
         String h = hash(password);
+        // Cursor lets us go through the result of the query
         Cursor cursor = db.query(USERS_TABLE, new String[]{User_Name, Surname, Role, UserID}, Username + "=? AND " + Password + "=?",
                             new String[]{username, h}, null, null, null);
 
@@ -193,29 +257,30 @@ public class DatabaseManager extends SQLiteOpenHelper {
             String name = cursor.getString(0);
             String surname = cursor.getString(1);
             name_surname += name;
-            if(!surname.isEmpty()) name_surname += " " + surname;
+            if(!surname.isEmpty()) name_surname += " " + surname; // Surname may be empty
             role = cursor.getInt(2);
-            loggedInID = cursor.getInt(3);
-            intermediateUserID = generateIntermediateUserID(username, password);
+            intermediateUserID = generateIntermediateUserID(username, password); // Generate intermediate hash value on login
         }
-        if(!cursor.isClosed()) cursor.close();
-        return new Pair<String, Integer>(name_surname, role);
+        if(!cursor.isClosed()) cursor.close(); // Cursor needs to be closed afterwards
+        return new Pair<>(name_surname, role);
     }
 
+    // Remove any item from the corresponding table, based on the item's ID
     public String removeItem(String table, String idQual, int id) {
         SQLiteDatabase db = getWritableDatabase();
         try {
-            db.delete(table, idQual+"="+String.valueOf(id), null);
+            db.delete(table, idQual+"="+ id, null);
             return "";
         } catch (SQLiteException e) {
             return e.getMessage();
         }
     }
 
+    // Insert new session into the database
     public String addSession(Context c, Session s) {
         SQLiteDatabase db = getWritableDatabase();
         try {
-            // Check if session with the same name already exists for the given date
+            // Forbid two sessions with the same name existing on the same date
             Cursor cursor = db.query(SESSIONS_TABLE, null, Session_Name+"=? AND "+Date+"=?",
                                      new String[]{ s.getName(), s.getDate() }, null, null, null);
             // If one already exists, throw error
@@ -225,13 +290,14 @@ public class DatabaseManager extends SQLiteOpenHelper {
             }
             if(!cursor.isClosed()) cursor.close();
 
+            // Otherwise, insert the session as normal
             ContentValues q = new ContentValues();
             q.putNull(SessionID);
             q.put(Session_Name, s.getName());
             q.put(Date, s.getDate());
             q.put(EndDate, s.getEndDate());
             q.put(Description, s.getDescription());
-            db.insert(SESSIONS_TABLE, null, q);
+            db.insertOrThrow(SESSIONS_TABLE, null, q);
             // Create a matching votes table, use last_insert_rowid() to get the ID of the newly inserted session
             // Use raw SQL query for this
             db.execSQL("INSERT INTO " + VOTES_TABLE + " VALUES(NULL, 0, 0, 0, last_insert_rowid())");
@@ -241,14 +307,16 @@ public class DatabaseManager extends SQLiteOpenHelper {
         }
     }
 
+    // Get vote results for a given session
     public Vote getResults(int sessionID) {
         SQLiteDatabase db = getReadableDatabase();
         try {
-            Cursor cursor = db.query(VOTES_TABLE, null, SessionID+"="+String.valueOf(sessionID), null, null, null, null);
+            Cursor cursor = db.query(VOTES_TABLE, null, SessionID+"="+ sessionID, null, null, null, null);
             if(cursor.getCount() == 0) {
                 if(!cursor.isClosed()) cursor.close();
                 return null;
             }
+            // There can only be one vote for a given session (1:1 relationship)
             Vote v = new Vote();
             cursor.moveToFirst();
             v.setId(cursor.getInt(0));
@@ -263,19 +331,21 @@ public class DatabaseManager extends SQLiteOpenHelper {
         }
     }
 
+    // Use enum to avoid having to handle error cases for unknown values
     public enum VoteDecision { YES, NO, ABSTAIN }
     public String castVote(int voteID, VoteDecision decision) {
         SQLiteDatabase db = getWritableDatabase();
 
         // Generate unique vote ID to prevent user from voting multiple times
-        String h = hash(intermediateUserID + String.valueOf(voteID));
+        String h = hash(intermediateUserID + voteID);
         ContentValues q = new ContentValues();
         q.putNull(VoteSafetyID);
         q.put(Hash, h);
         q.put(VoteID, voteID);
         try {
             // Should throw exception if a vote with the same hash already exists in the database
-            db.insert(VOTESAFETY_TABLE, null, q);
+            // The exception shouldn't happen in normal circumstances
+            db.insertOrThrow(VOTESAFETY_TABLE, null, q);
             String columnName = "";
             switch(decision) {
                 case YES:
@@ -288,20 +358,24 @@ public class DatabaseManager extends SQLiteOpenHelper {
                     columnName = VotesAbstain;
                     break;
             }
-            // Increment corresponding column
-            db.execSQL("UPDATE " + VOTES_TABLE + " SET " + columnName + " = " + columnName + " + 1 WHERE " + VoteID + " = " + String.valueOf(voteID));
+            // Use SQLite query to increment the corresponding vote decision
+            db.execSQL("UPDATE " + VOTES_TABLE + " SET " + columnName + " = " + columnName + " + 1 WHERE " + VoteID + " = " + voteID);
             return "";
         } catch (SQLiteException e) {
             return e.getMessage();
         }
     }
 
+    /*
+     * Check if the user can vote for a given vote/session.
+     * Returns true if the user hasn't previously voted on a given
+     * session.
+     */
     public boolean canVote(Context c, int voteID) {
-        SQLiteDatabase db = getReadableDatabase();
-        String h = hash(intermediateUserID + String.valueOf(voteID));
+        String h = hash(intermediateUserID + voteID);
         try {
             VoteSafety[] results = (VoteSafety[])DatabaseFactory.getQueryResults(c, VOTESAFETY_TABLE,
-                    VoteID + "=" + String.valueOf(voteID) + " AND " + Hash + "=?", new String[] {h});
+                    VoteID + "=" + voteID + " AND " + Hash + "=?", new String[] {h});
             if(results == null) return true;
             return results.length == 0;
         } catch (SQLiteException e) {
@@ -313,9 +387,12 @@ public class DatabaseManager extends SQLiteOpenHelper {
     }
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Runs when the database on the filesystem doesn't match the
+        // version defined in this class.
         if (oldVersion != newVersion) {
             db.execSQL("DROP TABLE IF EXISTS " + USERS_TABLE);
-            db.execSQL("DROP TABLE IF EXISTS " + VOTES_TABLE); // Drop Votes first due to FK constraint
+            db.execSQL("DROP TABLE IF EXISTS " + VOTESAFETY_TABLE); // Drop tables in reverse order to reflect FK constraints
+            db.execSQL("DROP TABLE IF EXISTS " + VOTES_TABLE);
             db.execSQL("DROP TABLE IF EXISTS " + SESSIONS_TABLE);
             onCreate(db);
         }
@@ -331,7 +408,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public static String hash(String s) {
         // Use SHA-256 via MessageDigest, which is always supported on any Java implementation
         // https://docs.oracle.com/javase/8/docs/api/java/security/MessageDigest.html
-        MessageDigest md = null;
+        MessageDigest md;
         try {
             md = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {

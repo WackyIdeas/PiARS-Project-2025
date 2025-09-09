@@ -13,9 +13,6 @@ import android.widget.CalendarView;
 import android.widget.ListView;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import java.time.temporal.ChronoUnit;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -45,8 +42,10 @@ public class CalendarFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_calendar, container, false);
+        // Keep reference for other parts of the code
         context = getActivity();
         selectedDate = LocalDate.now();
+        // Show only sessions for the selected day.
         adapterModel = new SessionAdapter(context, inflater, DatabaseManager.Date+"=?", new String[]{ selectedDate.toString() });
         ListView listView = v.findViewById(R.id.sessionListView);
         listView.setAdapter(adapterModel);

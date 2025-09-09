@@ -24,11 +24,14 @@ public class SessionAdapter extends BaseAdapter {
     Context context;
     protected Session[] model;
 
+    // Since SessionAdapter is used in multiple places, allow session
+    // filtering
     String selectionFilter;
     String[] selectionFilterArgs;
 
     public void setSelectionFilterArgs(String[] args) {
         selectionFilterArgs = args;
+        // Populate model again and update the adapter
         populateModel(selectionFilter, selectionFilterArgs);
         notifyDataSetChanged();
     }
@@ -51,6 +54,7 @@ public class SessionAdapter extends BaseAdapter {
         return model[position].getId();
     }
 
+    // Helper function to remove sessions from the database
     public void removeItem(int index) {
         String msg = DatabaseManager.getInstance(context).removeItem(DatabaseManager.SESSIONS_TABLE, DatabaseManager.SessionID, index);
         if(!msg.isEmpty()) Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
@@ -58,6 +62,7 @@ public class SessionAdapter extends BaseAdapter {
         // Update the adapter as the underlying data model is changed
         notifyDataSetChanged();
     }
+    // Helper function to add sessions to the database
     public void addItem(Session s) {
         String result = DatabaseManager.getInstance(context).addSession(context, s);
         if(!result.isEmpty()) Toast.makeText(context, result, Toast.LENGTH_LONG).show();
@@ -85,6 +90,7 @@ public class SessionAdapter extends BaseAdapter {
         context = c;
         populateModel(selectionFilter, selectionFilterArgs);
     }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {

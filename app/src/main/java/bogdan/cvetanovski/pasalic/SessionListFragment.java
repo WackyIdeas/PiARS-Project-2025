@@ -94,6 +94,7 @@ public class SessionListFragment extends Fragment {
         });
         Button submitButton = v.findViewById(R.id.submitButton);
         submitButton.setOnClickListener(view -> {
+            // Create a custom dialog form for additional session information
             Dialog dialog = new Dialog(context);
             dialog.setContentView(R.layout.session_form);
             Objects.requireNonNull(dialog.getWindow()).setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -108,9 +109,9 @@ public class SessionListFragment extends Fragment {
             });
 
             submit.setOnClickListener(v1 -> {
-
                 String name = sName.getText().toString().trim();
                 String desc = sDesc.getText().toString().trim();
+                // Prevent empty inputs for non-null columns
                 if(name.isEmpty()) {
                     Toast.makeText(context, getString(R.string.SessionFormError), Toast.LENGTH_LONG).show();
                     dialog.dismiss();
