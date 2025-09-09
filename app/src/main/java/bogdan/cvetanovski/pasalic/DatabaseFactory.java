@@ -76,6 +76,25 @@ public class DatabaseFactory {
                     if (!cursor.isClosed()) cursor.close();
                 }
                 return votes;
+            case DatabaseManager.VOTESAFETY_TABLE:
+                VoteSafety[] voteHashes = new VoteSafety[cursor.getCount()];
+                try {
+                    cursor.moveToFirst();
+                    do {
+                        int i = cursor.getPosition();
+                        voteHashes[i] = new VoteSafety();
+                        voteHashes[i].setId(cursor.getInt(0));
+                        voteHashes[i].setHash(cursor.getString(1));
+                        voteHashes[i].setVoteID(cursor.getInt(2));
+                    } while (cursor.moveToNext());
+                } catch (Exception e) {
+                    System.err.print("Exception: ");
+                    System.err.println(e.getMessage());
+                    return null;
+                } finally {
+                    if (!cursor.isClosed()) cursor.close();
+                }
+                return voteHashes;
             default:
                 cursor.close();
                 throw new InvalidTableException("Invalid table name!");

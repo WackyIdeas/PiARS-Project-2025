@@ -44,6 +44,11 @@
         android:layout_height="wrap_content"
         android:text="@string/TimeLeftText" />
 
+    <TextView
+        android:id="@+id/alreadyVotedTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <Space
         android:layout_width="match_parent"
         android:layout_height="match_parent"

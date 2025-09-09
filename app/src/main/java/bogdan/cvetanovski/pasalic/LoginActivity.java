@@ -25,13 +25,13 @@ public class LoginActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        DatabaseManager.getInstance(this).setLoggedInID(-1);
+        DatabaseManager.getInstance(this).resetCredentials();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        DatabaseManager.getInstance(this).setLoggedInID(-1);
+        DatabaseManager.getInstance(this).resetCredentials();
     }
 
     public void enterRegistrationPage(View view) {

@@ -23,6 +23,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public static final String USERS_TABLE = "Users";
     public static final String SESSIONS_TABLE = "Sessions";
     public static final String VOTES_TABLE = "Votes";
+    public static final String VOTESAFETY_TABLE = "VoteSafety";
 
     // User table
     public static final String UserID = "UserID";
@@ -48,13 +49,22 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public static final String VotesNo = "VotesNo";
     public static final String VotesAbstain = "VotesAbstain";
 
+    public static final String VoteSafetyID = "VoteSafetyID";
+    public static final String Hash = "Hash";
+
+
+
     private int loggedInID = -1;
-    public void setLoggedInID(int id) {
-        loggedInID = id;
+    public void resetCredentials() {
+        loggedInID = -1;
+        intermediateUserID = "";
     }
     public int getLoggedInID() {
         return loggedInID;
     }
+
+    private String intermediateUserID = "";
+
     // Use Singleton design pattern for
     private static DatabaseManager sInstance;
 
@@ -86,6 +96,13 @@ public class DatabaseManager extends SQLiteOpenHelper {
                 VotesAbstain INTEGER NOT NULL CHECK(VotesAbstain >= 0),
                 SessionID INTEGER NOT NULL UNIQUE,
                 FOREIGN KEY (SessionID) REFERENCES Sessions(SessionID) ON DELETE CASCADE
+           );
+
+           CREATE TABLE VoteSafety (
+                VoteSafetyID INTEGER PRIMARY KEY,
+                Hash TEXT NOT NULL UNIQUE,
+                VoteID INTEGER NOT NULL,
+                FOREIGN KEY (VoteID) REFERENCES Votes(VoteID) ON DELETE CASCADE
            );
 
      */
@@ -127,10 +144,17 @@ public class DatabaseManager extends SQLiteOpenHelper {
                     VotesAbstain + " INTEGER NOT NULL CHECK("+ VotesAbstain +" >= 0)," +
                     SessionID + " INTEGER NOT NULL UNIQUE," +
                     "FOREIGN KEY ("+SessionID+") REFERENCES "+SESSIONS_TABLE+"("+SessionID+") ON DELETE CASCADE);";
+        String voteSafetyTable =
+                "CREATE TABLE "+ VOTESAFETY_TABLE +" (" +
+                    VoteSafetyID + " INTEGER PRIMARY KEY," +
+                    Hash + " TEXT NOT NULL UNIQUE," +
+                    VoteID + " INTEGER NOT NULL," +
+                    "FOREIGN KEY ("+ VoteID +") REFERENCES "+VOTES_TABLE+"("+VoteID+") ON DELETE CASCADE);";
 
         db.execSQL(userTable);
         db.execSQL(sessionTable);
         db.execSQL(votesTable);
+        db.execSQL(voteSafetyTable);
     }
 
     public String registerUser(User u) {
@@ -150,6 +174,11 @@ public class DatabaseManager extends SQLiteOpenHelper {
         }
         return msg;
     }
+    private String generateIntermediateUserID(String s1, String s2) {
+        String q = s1.length() + s1;
+        String p = s2.length() + s2;
+        return hash(q) + hash(p);
+    }
     // Role value of -1 is assumed to be a failed login
     public Pair<String, Integer> login(String username, String password) {
         SQLiteDatabase db = getReadableDatabase();
@@ -167,6 +196,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
             if(!surname.isEmpty()) name_surname += " " + surname;
             role = cursor.getInt(2);
             loggedInID = cursor.getInt(3);
+            intermediateUserID = generateIntermediateUserID(username, password);
         }
         if(!cursor.isClosed()) cursor.close();
         return new Pair<String, Integer>(name_surname, role);
@@ -233,6 +263,54 @@ public class DatabaseManager extends SQLiteOpenHelper {
         }
     }
 
+    public enum VoteDecision { YES, NO, ABSTAIN }
+    public String castVote(int voteID, VoteDecision decision) {
+        SQLiteDatabase db = getWritableDatabase();
+
+        // Generate unique vote ID to prevent user from voting multiple times
+        String h = hash(intermediateUserID + String.valueOf(voteID));
+        ContentValues q = new ContentValues();
+        q.putNull(VoteSafetyID);
+        q.put(Hash, h);
+        q.put(VoteID, voteID);
+        try {
+            // Should throw exception if a vote with the same hash already exists in the database
+            db.insert(VOTESAFETY_TABLE, null, q);
+            String columnName = "";
+            switch(decision) {
+                case YES:
+                    columnName = VotesYes;
+                    break;
+                case NO:
+                    columnName = VotesNo;
+                    break;
+                case ABSTAIN:
+                    columnName = VotesAbstain;
+                    break;
+            }
+            // Increment corresponding column
+            db.execSQL("UPDATE " + VOTES_TABLE + " SET " + columnName + " = " + columnName + " + 1 WHERE " + VoteID + " = " + String.valueOf(voteID));
+            return "";
+        } catch (SQLiteException e) {
+            return e.getMessage();
+        }
+    }
+
+    public boolean canVote(Context c, int voteID) {
+        SQLiteDatabase db = getReadableDatabase();
+        String h = hash(intermediateUserID + String.valueOf(voteID));
+        try {
+            VoteSafety[] results = (VoteSafety[])DatabaseFactory.getQueryResults(c, VOTESAFETY_TABLE,
+                    VoteID + "=" + String.valueOf(voteID) + " AND " + Hash + "=?", new String[] {h});
+            if(results == null) return true;
+            return results.length == 0;
+        } catch (SQLiteException e) {
+            System.err.println(e.getMessage());
+            return false;
+        } catch (InvalidTableException e) {
+            throw new RuntimeException(e);
+        }
+    }
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion != newVersion) {

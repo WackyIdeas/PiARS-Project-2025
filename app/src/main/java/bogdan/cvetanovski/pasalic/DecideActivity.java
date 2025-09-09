@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,6 +23,8 @@ public class DecideActivity extends AppCompatActivity {
     String description;
     String sessionDate;
     String endDate;
+
+    int voteID;
 
     // Keep track of which button is pressed from the button group
     int[] buttonGroup = {
@@ -67,18 +70,39 @@ public class DecideActivity extends AppCompatActivity {
 
         long daysBetween = ChronoUnit.DAYS.between(today, endingDate);
         tv = findViewById(R.id.timeLeftText);
-        if(daysBetween <= 0) { // Disable all buttons and notify that the voting period has ended
-            result = getResources().getString(R.string.VoteEnded);
-            for (int j : buttonGroup) {
-                Button b = findViewById(j);
-                b.setEnabled(false);
+
+        boolean canVote = false;
+        try {
+            Vote[] votes = (Vote[])DatabaseFactory.getQueryResults(this, DatabaseManager.VOTES_TABLE,
+                    DatabaseManager.SessionID + "=" + String.valueOf(sessionID), null);
+            if(votes != null && votes.length > 0) {
+                voteID = votes[0].getId();
+                canVote = DatabaseManager.getInstance(this).canVote(this, voteID);
             }
-            Button b = findViewById(R.id.submitVoteButton);
-            b.setEnabled(false);
+        } catch (InvalidTableException e) {
+            throw new RuntimeException(e);
+        }
+
+        Button b = findViewById(R.id.submitVoteButton);
+        b.setEnabled(false);
+        if(!canVote) {
+            TextView label = findViewById(R.id.alreadyVotedTextView);
+            label.setText(getResources().getString(R.string.AlreadyVoted));
+        }
+        if(daysBetween <= 0) {
+            result = getResources().getString(R.string.VoteEnded);
         } else {
             result = getResources().getString(R.string.TimeLeftText, daysBetween, daysBetween == 1 ? "" : "s");
         }
         tv.setText(result);
+
+        // Disable all the other buttons if either conditions are met
+        if(!canVote || daysBetween <= 0) {
+            for (int j : buttonGroup) {
+                b = findViewById(j);
+                b.setEnabled(false);
+            }
+        }
     }
 
     public void submitVote(View view) {
@@ -93,21 +117,32 @@ public class DecideActivity extends AppCompatActivity {
         builder.setCancelable(true);
         builder.setPositiveButton(stringYes, (dialog, which) -> {
             // Do voting shenanigans here
-            try {
-                User[] user = (User[])DatabaseFactory.getQueryResults(this, DatabaseManager.USERS_TABLE,
-                        DatabaseManager.UserID+"="+String.valueOf(DatabaseManager.getInstance(this).getLoggedInID()), null);
-
-                if(user != null) {
-                    if(user.length != 1) {
-                        throw new RuntimeException();
-                    }
-
-
-                }
-            } catch (InvalidTableException e) {
-                throw new RuntimeException(e);
+            DatabaseManager.VoteDecision vote;
+            if(selectedButton == R.id.yesButton) vote = DatabaseManager.VoteDecision.YES;
+            else if(selectedButton == R.id.noButton) vote = DatabaseManager.VoteDecision.NO;
+            else if(selectedButton == R.id.abstainButton) vote = DatabaseManager.VoteDecision.ABSTAIN;
+            else {
+                String toastText = getResources().getString(R.string.VoteError);
+                Toast.makeText(this, toastText, Toast.LENGTH_LONG).show();
+                dialog.cancel();
+                return;
             }
 
+            String msg = DatabaseManager.getInstance(this).castVote(voteID,vote);
+            if(!msg.isEmpty()) {
+                Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+                dialog.cancel();
+            } else {
+                TextView label = findViewById(R.id.alreadyVotedTextView);
+                label.setText(getResources().getString(R.string.AlreadyVoted));
+                // Disable all buttons after a successful vote
+                Button b = findViewById(R.id.submitVoteButton);
+                b.setEnabled(false);
+                for (int j : buttonGroup) {
+                    b = findViewById(j);
+                    b.setEnabled(false);
+                }
+            }
         });
         builder.setNegativeButton(stringNo, (dialog, which) -> dialog.cancel());
         AlertDialog d = builder.create();
@@ -118,6 +153,8 @@ public class DecideActivity extends AppCompatActivity {
         selectedButton = view.getId();
         Button btn = (Button)view;
         btn.setBackgroundColor(getResources().getColor(R.color.red, this.getTheme()));
+        Button submitButton = findViewById(R.id.submitVoteButton);
+        submitButton.setEnabled(true);
         for (int j : buttonGroup) {
             if (j != selectedButton) {
                 Button b = findViewById(j);

@@ -46,5 +46,7 @@
     <string name="VoteEnded">Voting period has ended</string>
     <string name="VoteConfirmTitle">Confirm vote decision</string>
     <string name="VoteConfirmBody">Once you confirm, you won\'t be able to vote again for this session!</string>
+    <string name="VoteError">Invalid vote decision!</string>
+    <string name="AlreadyVoted">You already voted!</string>
 
 </resources>
