@@ -108,9 +108,7 @@ public class StudentAdapter extends BaseAdapter {
                 dialog.cancel();
                 selected.setChecked(false);
             });
-            builder.setOnCancelListener(dialog -> {
-                selected.setChecked(false);
-            });
+            builder.setOnCancelListener(dialog -> selected.setChecked(false));
             AlertDialog d = builder.create();
             d.show();
         });

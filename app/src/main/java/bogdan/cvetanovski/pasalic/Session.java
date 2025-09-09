@@ -1,7 +1,5 @@
 package bogdan.cvetanovski.pasalic;
 
-import java.time.LocalDate;
-
 public class Session extends ObjectRow {
     private String date;
     private String endDate;

@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.EditText;
@@ -21,8 +20,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.Objects;
 
 public class SessionListFragment extends Fragment {
@@ -104,9 +101,7 @@ public class SessionListFragment extends Fragment {
             EditText sName = dialog.findViewById(R.id.sessionNameTextEdit);
             EditText sDesc = dialog.findViewById(R.id.sessionDescriptionTextEdit);
 
-            cancel.setOnClickListener(v1 -> {
-                dialog.dismiss();
-            });
+            cancel.setOnClickListener(v1 -> dialog.dismiss());
 
             submit.setOnClickListener(v1 -> {
                 String name = sName.getText().toString().trim();

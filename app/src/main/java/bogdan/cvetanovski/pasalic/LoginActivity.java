@@ -49,17 +49,17 @@ public class LoginActivity extends AppCompatActivity {
         // Trim input
         Pair<String, Integer> result = DatabaseManager.getInstance(this).login(nameInput.getText().toString().trim(), passInput.getText().toString().trim());
         if(result.second != -1) {
+            Intent intent;
             if(result.second == 1) {
                 // Enter admin page
-                Intent intent = new Intent(this, AdminActivity.class);
-                startActivity(intent);
+                intent = new Intent(this, AdminActivity.class);
             } else {
-                Intent intent = new Intent(this, StudentViewActivity.class);
+                intent = new Intent(this, StudentViewActivity.class);
                 Bundle params = new Bundle();
                 params.putString("studentName", result.first);
                 intent.putExtras(params);
-                startActivity(intent);
             }
+            startActivity(intent);
         } else {
             // Login failed, notify user about it
             // https://developer.android.com/guide/topics/ui/notifiers/toasts
