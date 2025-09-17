@@ -1,6 +1,6 @@
 package bogdan.cvetanovski.pasalic;
 
-import android.app.AlertDialog;
+//import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +16,7 @@ import android.widget.Button;
 import android.widget.CalendarView;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
+//import android.widget.TextView;
 import android.widget.Toast;
 
 import java.time.LocalDate;
@@ -37,12 +37,6 @@ public class SessionListFragment extends Fragment {
         return new SessionListFragment();
     }
 
-    public void tryNotifyEmptyList() {
-        if(adapterModel.getCount() == 0) {
-            String toastText = getResources().getString(R.string.EmptyListIndicator);
-            Toast.makeText(getActivity(), toastText, Toast.LENGTH_LONG).show();
-        }
-    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -63,6 +57,8 @@ public class SessionListFragment extends Fragment {
             startActivity(intent);
         });
 
+        /*
+        // Don't allow sessions to be deleted from the client anymore
         // Build an alert dialog for deletion confirmation
         listView.setOnItemLongClickListener((parent, view, position, id) -> {
             AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
@@ -81,7 +77,7 @@ public class SessionListFragment extends Fragment {
             AlertDialog d = builder.create();
             d.show();
             return true; // Important to mark the event as "finished" so that the tap event defined above isn't triggered
-        });
+        });*/
 
 
         selectedDate = LocalDate.now();
@@ -125,14 +121,6 @@ public class SessionListFragment extends Fragment {
             dialog.show();
         });
 
-        adapterModel.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                tryNotifyEmptyList();
-            }
-        });
-        //tryNotifyEmptyList();
         return v;
     }
 }

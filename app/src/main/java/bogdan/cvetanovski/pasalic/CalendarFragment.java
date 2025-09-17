@@ -46,7 +46,7 @@ public class CalendarFragment extends Fragment {
         context = getActivity();
         selectedDate = LocalDate.now();
         // Show only sessions for the selected day.
-        adapterModel = new SessionAdapter(context, inflater, DatabaseManager.Date+"=?", new String[]{ selectedDate.toString() });
+        adapterModel = new SessionAdapter(context, inflater, "date("+DatabaseManager.Date+")=?", new String[]{ selectedDate.toString() });
         ListView listView = v.findViewById(R.id.sessionListView);
         listView.setAdapter(adapterModel);
 
@@ -66,6 +66,7 @@ public class CalendarFragment extends Fragment {
             params.putString("sessionName", s.getName());
             params.putString("sessionDate", s.getDate());
             params.putString("endDate", s.getEndDate());
+            params.putString("sessionHexID", s.getSessionHexID());
             intent.putExtras(params);
             startActivity(intent);
         });

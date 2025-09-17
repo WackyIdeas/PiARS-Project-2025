@@ -44,6 +44,5 @@ public class AdminActivity extends AppCompatActivity {
         Button sessionsButton = findViewById(R.id.sessionsButton);
         studentsButton.setBackgroundColor(getResources().getColor(R.color.purple_200, this.getTheme()));
         sessionsButton.setBackgroundColor(getResources().getColor(R.color.teal_200, this.getTheme()));
-        slf.tryNotifyEmptyList();
     }
 }

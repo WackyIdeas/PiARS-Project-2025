@@ -15,11 +15,11 @@ import android.database.sqlite.SQLiteDatabase;
  * TODO: Implement sorting
  */
 public class DatabaseFactory {
-    public static ObjectRow[] getQueryResults(Context c, String table, String selection, String[] selectionArgs) throws InvalidTableException {
+    public static ObjectRow[] getQueryResults(Context c, String table, String selection, String[] selectionArgs, String orderBy) throws InvalidTableException {
         SQLiteDatabase db = DatabaseManager.getInstance(c).getReadableDatabase();
 
         Cursor cursor;
-        cursor = db.query(table, null, selection, selectionArgs, null, null, null);
+        cursor = db.query(table, null, selection, selectionArgs, null, null, orderBy);
 
         switch (table) {
             case DatabaseManager.USERS_TABLE:
@@ -52,10 +52,11 @@ public class DatabaseFactory {
                         int i = cursor.getPosition();
                         sessions[i] = new Session();
                         sessions[i].setId(cursor.getInt(0));
-                        sessions[i].setDate(cursor.getString(1));
-                        sessions[i].setName(cursor.getString(2));
-                        sessions[i].setDescription(cursor.getString(3));
-                        sessions[i].setEndDate(cursor.getString(4));
+                        sessions[i].setSessionHexID(cursor.getString(1));
+                        sessions[i].setDate(cursor.getString(2));
+                        sessions[i].setName(cursor.getString(3));
+                        sessions[i].setDescription(cursor.getString(4));
+                        sessions[i].setEndDate(cursor.getString(5));
                     } while (cursor.moveToNext());
                 } catch (Exception e) {
                     System.err.print("Exception: ");

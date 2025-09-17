@@ -2,6 +2,8 @@ package bogdan.cvetanovski.pasalic;
 
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -13,7 +15,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import org.json.JSONException;
+
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 
 public class DecideActivity extends AppCompatActivity {
@@ -23,6 +31,9 @@ public class DecideActivity extends AppCompatActivity {
     String description;
     String sessionDate;
     String endDate;
+
+    String sessionHexID;
+    private Handler handler = new Handler(Looper.getMainLooper());
 
     int voteID;
 
@@ -51,6 +62,7 @@ public class DecideActivity extends AppCompatActivity {
         sessionID = getIntent().getExtras().getInt("sessionID");
         sessionDate = getIntent().getExtras().getString("sessionDate");
         endDate = getIntent().getExtras().getString("endDate");
+        sessionHexID = getIntent().getExtras().getString("sessionHexID");
 
         // Update UI with the passed information
         TextView tv = findViewById(R.id.descriptionText);
@@ -62,51 +74,71 @@ public class DecideActivity extends AppCompatActivity {
         tv.setText(result);
 
         tv = findViewById(R.id.dateText);
-        result = getResources().getString(R.string.SessionDateText, sessionDate);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+        LocalDateTime sessionDateTime = LocalDateTime.parse(sessionDate, fmt);
+        DateTimeFormatter readableFormat = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT);
+        result = getResources().getString(R.string.SessionDateText, sessionDateTime.format(readableFormat));
         tv.setText(result);
 
-        LocalDate endingDate = LocalDate.parse(endDate);
-        LocalDate today = LocalDate.now();
+        LocalDateTime endingDate = LocalDateTime.parse(endDate, fmt);
+        LocalDateTime today = LocalDateTime.now();
 
         long daysBetween = ChronoUnit.DAYS.between(today, endingDate);
-        tv = findViewById(R.id.timeLeftText);
-
-        // Check if the user has voted before for the given session
-        // This is done to prevent abuse of the voting system, while
-        // attempting to anonymize each user who voted.
-        boolean canVote = false;
-        try {
-            Vote[] votes = (Vote[])DatabaseFactory.getQueryResults(this, DatabaseManager.VOTES_TABLE,
-                    DatabaseManager.SessionID + "=" + sessionID, null);
-            if(votes != null && votes.length > 0) {
-                voteID = votes[0].getId();
-                canVote = DatabaseManager.getInstance(this).canVote(this, voteID);
-            }
-        } catch (InvalidTableException e) {
-            throw new RuntimeException(e);
-        }
 
         // Disable the submit button by default
         Button b = findViewById(R.id.submitVoteButton);
         b.setEnabled(false);
-        if(!canVote) {
-            TextView label = findViewById(R.id.alreadyVotedTextView);
-            label.setText(getResources().getString(R.string.AlreadyVoted));
+        for (int j : buttonGroup) {
+            b = findViewById(j);
+            b.setEnabled(false);
         }
-        if(daysBetween <= 0) {
-            result = getResources().getString(R.string.VoteEnded);
-        } else {
-            result = getResources().getString(R.string.TimeLeftText, daysBetween, daysBetween == 1 ? "" : "s");
-        }
-        tv.setText(result);
 
-        // Disable all the other buttons if either conditions are met
-        if(!canVote || daysBetween <= 0) {
-            for (int j : buttonGroup) {
-                b = findViewById(j);
-                b.setEnabled(false);
-            }
-        }
+        new Thread(() -> {
+                // Synchronize the database with the MongoDB server
+                String res = DatabaseManager.getInstance(this).synchronizeDatabase();
+                handler.post(() -> {
+                    if(!res.isEmpty()) {
+                        Toast.makeText(this, res, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    TextView timeLeftView = findViewById(R.id.timeLeftText);
+                    // Check if the user has voted before for the given session
+                    // This is done to prevent abuse of the voting system, while
+                    // attempting to anonymize each user who voted.
+                    boolean canVote = false;
+                    try {
+                        Vote[] votes = (Vote[])DatabaseFactory.getQueryResults(this, DatabaseManager.VOTES_TABLE,
+                                DatabaseManager.SessionID + "=" + sessionID, null, null);
+                        if(votes != null && votes.length > 0) {
+                            voteID = votes[0].getId();
+                            canVote = DatabaseManager.getInstance(this).canVote(this, voteID);
+                        }
+                    } catch (InvalidTableException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    if(!canVote) {
+                        TextView label = findViewById(R.id.alreadyVotedTextView);
+                        label.setText(getResources().getString(R.string.AlreadyVoted));
+                    }
+                    String txt;
+                    if(daysBetween <= 0) {
+                        txt = getResources().getString(R.string.VoteEnded);
+                    } else {
+                        txt = getResources().getString(R.string.TimeLeftText, daysBetween, daysBetween == 1 ? "" : "s");
+                    }
+                    timeLeftView.setText(txt);
+                    // Enable all the other buttons if the following conditions are met
+                    Button btn;
+                    if(canVote && daysBetween > 0) {
+                        for (int j : buttonGroup) {
+                            btn = findViewById(j);
+                            btn.setEnabled(true);
+                        }
+                    }
+                });
+        }).start();
+
     }
 
     public void submitVote(View view) {
@@ -131,23 +163,26 @@ public class DecideActivity extends AppCompatActivity {
                 dialog.cancel();
                 return;
             }
-
-            // Perform the vote itself
-            String msg = DatabaseManager.getInstance(this).castVote(voteID,vote);
-            if(!msg.isEmpty()) {
-                Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
-                dialog.cancel();
-            } else {
-                TextView label = findViewById(R.id.alreadyVotedTextView);
-                label.setText(getResources().getString(R.string.AlreadyVoted));
-                // Disable all buttons after a successful vote
-                Button b = findViewById(R.id.submitVoteButton);
-                b.setEnabled(false);
-                for (int j : buttonGroup) {
-                    b = findViewById(j);
-                    b.setEnabled(false);
-                }
-            }
+            new Thread(() -> {
+                // Perform the vote itself
+                String msg = DatabaseManager.getInstance(this).castVote(sessionHexID,voteID,vote);
+                handler.post(() -> {
+                    if(!msg.isEmpty()) {
+                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+                        dialog.cancel();
+                    } else {
+                        TextView label = findViewById(R.id.alreadyVotedTextView);
+                        label.setText(getResources().getString(R.string.AlreadyVoted));
+                        // Disable all buttons after a successful vote
+                        Button b = findViewById(R.id.submitVoteButton);
+                        b.setEnabled(false);
+                        for (int j : buttonGroup) {
+                            b = findViewById(j);
+                            b.setEnabled(false);
+                        }
+                    }
+                });
+            }).start();
         });
         builder.setNegativeButton(stringNo, (dialog, which) -> dialog.cancel());
         AlertDialog d = builder.create();

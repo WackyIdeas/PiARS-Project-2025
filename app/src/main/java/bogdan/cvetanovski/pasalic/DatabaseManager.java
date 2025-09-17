@@ -9,6 +9,11 @@ import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Pair;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -43,6 +48,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     // Sessions table columns
     public static final String SessionID = "SessionID";
+    public static final String SessionHexID = "SessionHexID";
     public static final String Date = "Date";
     public static final String Session_Name = "Name";
     public static final String Description = "Description";
@@ -78,6 +84,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
               1 meaning admin role.
             Sessions:
             - Use CHECK constraint to ensure the EndDate doesn't come before Date
+            - Store MongoDB ID using SessionHexID
             Votes:
             - VotesYes, VotesNo, VotesAbstain are all non-negative.
             - Establish foreign key relationship between Votes and Sessions
@@ -99,6 +106,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
         CREATE TABLE Sessions (
              SessionID INTEGER PRIMARY KEY,
+             SessionHexID TEXT NOT NULL UNIQUE,
              Date TEXT NOT NULL,
              Name TEXT NOT NULL,
              Description TEXT,
@@ -158,6 +166,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
         String sessionTable =
                "CREATE TABLE "+ SESSIONS_TABLE +" (" +
                     SessionID + " INTEGER PRIMARY KEY," +
+                    SessionHexID + " TEXT NOT NULL UNIQUE," +
                     Date + " TEXT NOT NULL," +
                     Session_Name + " TEXT NOT NULL," +
                     Description + " TEXT," +
@@ -184,6 +193,88 @@ public class DatabaseManager extends SQLiteOpenHelper {
         db.execSQL(voteSafetyTable);
     }
 
+    /*
+     * Get the session and vote information from the HTTP server.
+     * As every session needs to have a followup row in the votes table,
+     * and the expressjs server returns sessions and votes in the correct
+     * mutual order, we can use the same index to iterate through the JSON
+     * array response. We can interrogate the local SQLite database for
+     * every session, and insert new sessions, while updating existing rows.
+     *
+     * This is done in order to reduce the number of HTTP requests sent to
+     * the server.
+     */
+    public String synchronizeDatabase() {
+        JSONArray sessions;
+        JSONArray votes;
+        try {
+            sessions = HttpHelper.getJSONArrayFromURL("sessions");
+            votes = HttpHelper.getJSONArrayFromURL("votes?sessionId=");
+        } catch (JSONException | IOException e) {
+            return e.getMessage();
+        }
+        if(sessions == null || votes == null) {
+            return "Invalid response from server";
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        // Make a strong assumption that len(sessions) == len(votes)
+        // As the expressjs server will create a new vote entry for every session
+        if(sessions.length() != votes.length()) {
+            return "Possibly corrupt MongoDB database!";
+        }
+        Cursor cursor = null;
+        try {
+            // For every session and vote, check if they exist in the local database
+            for(int i = 0; i < sessions.length(); i++) {
+                JSONObject sessionObj = sessions.getJSONObject(i);
+                JSONObject voteObj = votes.getJSONObject(i);
+                String sessionMongoID = voteObj.getString("sessionId");
+                // Check to see if the corresponding session exists, and return the corresponding Vote row ID if so
+                cursor = db.rawQuery("SELECT "+ SESSIONS_TABLE +"."+SessionHexID+", "+VoteID+" FROM "
+                                        +SESSIONS_TABLE+" JOIN "+VOTES_TABLE+" ON "
+                                        +SESSIONS_TABLE+"."+SessionID+" = "+VOTES_TABLE+"."+SessionID+" WHERE "+SessionHexID+" = ?",
+                                     new String[] { sessionMongoID });
+                ContentValues q = new ContentValues();
+                q.put(SessionHexID, sessionMongoID);
+                q.put(Session_Name, sessionObj.getString("sessionName"));
+                q.put(Date, sessionObj.getString("date"));
+                q.put(EndDate, sessionObj.getString("endOfVotingTime"));
+                q.put(Description, sessionObj.getString("description"));
+
+                if(cursor.getCount() == 0) {
+                    // Doesn't exist, insert it into the database
+                    // No need to error check here, as the MongoDB data should be valid already
+                    q.putNull(SessionID);
+                    db.insertOrThrow(SESSIONS_TABLE, null, q);
+                    // Create a matching votes table, use last_insert_rowid() to get the ID of the newly inserted session
+                    // Use raw SQL query for this
+                    String yes = String.valueOf(voteObj.getInt("yes"));
+                    String no = String.valueOf(voteObj.getInt("no"));
+                    String abstain = String.valueOf(voteObj.getInt("abstain"));
+                    db.execSQL("INSERT INTO " + VOTES_TABLE + " VALUES(NULL, "+yes+", "+no+", "+abstain+", last_insert_rowid())");
+                } else {
+                    // The session already exists, update the session
+                    db.update(SESSIONS_TABLE, q, SessionHexID + " = ?", new String[] { sessionMongoID });
+                    // Update the corresponding vote
+                    cursor.moveToFirst();
+                    String voteID = String.valueOf(cursor.getInt(1));
+                    ContentValues v = new ContentValues();
+                    v.put(VotesYes, voteObj.getInt("yes"));
+                    v.put(VotesNo, voteObj.getInt("no"));
+                    v.put(VotesAbstain, voteObj.getInt("abstain"));
+                    db.update(VOTES_TABLE, v, VoteID + " = ?", new String[]{ voteID });
+                }
+                if(!cursor.isClosed())
+                    cursor.close();
+            }
+        } catch(JSONException e) {
+            return e.getMessage();
+        } catch(SQLiteException e) {
+            if(cursor != null && !cursor.isClosed()) cursor.close();
+            return e.getMessage();
+        }
+        return "";
+    }
     /*
      * Attempt to register the user to the database.
      * Return String as a potential message for UI elements to
@@ -276,41 +367,28 @@ public class DatabaseManager extends SQLiteOpenHelper {
         }
     }
 
-    // Insert new session into the database
-    public String addSession(Context c, Session s) {
-        SQLiteDatabase db = getWritableDatabase();
+    // Send HTTP POST request with appropriate session information
+    // The local SQLite database will be automatically updated using the
+    // SessionAdapter
+    public String addSession(Session s) {
         try {
-            // Forbid two sessions with the same name existing on the same date
-            Cursor cursor = db.query(SESSIONS_TABLE, null, Session_Name+"=? AND "+Date+"=?",
-                                     new String[]{ s.getName(), s.getDate() }, null, null, null);
-            // If one already exists, throw error
-            if(cursor.getCount() > 0) {
-                if(!cursor.isClosed()) cursor.close();
-                return c.getString(R.string.SessionFormExistsError);
-            }
-            if(!cursor.isClosed()) cursor.close();
-
-            // Otherwise, insert the session as normal
-            ContentValues q = new ContentValues();
-            q.putNull(SessionID);
-            q.put(Session_Name, s.getName());
-            q.put(Date, s.getDate());
-            q.put(EndDate, s.getEndDate());
-            q.put(Description, s.getDescription());
-            db.insertOrThrow(SESSIONS_TABLE, null, q);
-            // Create a matching votes table, use last_insert_rowid() to get the ID of the newly inserted session
-            // Use raw SQL query for this
-            db.execSQL("INSERT INTO " + VOTES_TABLE + " VALUES(NULL, 0, 0, 0, last_insert_rowid())");
-            return "";
-        } catch (SQLiteException e) {
+            JSONObject msg = new JSONObject();
+            msg.put("sessionName", s.getName());
+            msg.put("description", s.getDescription());
+            msg.put("endOfVotingTime", s.getEndDate());
+            msg.put("date", s.getDate());
+            HttpHelper.postJSONObjectFromURL("session", msg);
+        } catch (IOException | JSONException e) {
             return e.getMessage();
         }
+        return "";
     }
 
     // Get vote results for a given session
     public Vote getResults(int sessionID) {
-        SQLiteDatabase db = getReadableDatabase();
         try {
+            synchronizeDatabase();
+            SQLiteDatabase db = getReadableDatabase();
             Cursor cursor = db.query(VOTES_TABLE, null, SessionID+"="+ sessionID, null, null, null, null);
             if(cursor.getCount() == 0) {
                 if(!cursor.isClosed()) cursor.close();
@@ -333,8 +411,30 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     // Use enum to avoid having to handle error cases for unknown values
     public enum VoteDecision { YES, NO, ABSTAIN }
-    public String castVote(int voteID, VoteDecision decision) {
+    public String castVote(String sessionHexID, int voteID, VoteDecision decision) {
         SQLiteDatabase db = getWritableDatabase();
+
+        String columnName = "";
+        switch(decision) {
+            case YES:
+                columnName = "yes";
+                break;
+            case NO:
+                columnName = "no";
+                break;
+            case ABSTAIN:
+                columnName = "abstain";
+                break;
+        }
+        // POST to HTTP server
+        try {
+            JSONObject msg = new JSONObject();
+            msg.put("vote", columnName);
+            msg.put("sessionId", sessionHexID);
+            HttpHelper.postJSONObjectFromURL("results/vote", msg);
+        } catch (IOException | JSONException e) {
+            return e.getMessage();
+        }
 
         // Generate unique vote ID to prevent user from voting multiple times
         String h = hash(intermediateUserID + voteID);
@@ -346,20 +446,6 @@ public class DatabaseManager extends SQLiteOpenHelper {
             // Should throw exception if a vote with the same hash already exists in the database
             // The exception shouldn't happen in normal circumstances
             db.insertOrThrow(VOTESAFETY_TABLE, null, q);
-            String columnName = "";
-            switch(decision) {
-                case YES:
-                    columnName = VotesYes;
-                    break;
-                case NO:
-                    columnName = VotesNo;
-                    break;
-                case ABSTAIN:
-                    columnName = VotesAbstain;
-                    break;
-            }
-            // Use SQLite query to increment the corresponding vote decision
-            db.execSQL("UPDATE " + VOTES_TABLE + " SET " + columnName + " = " + columnName + " + 1 WHERE " + VoteID + " = " + voteID);
             return "";
         } catch (SQLiteException e) {
             return e.getMessage();
@@ -375,7 +461,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
         String h = hash(intermediateUserID + voteID);
         try {
             VoteSafety[] results = (VoteSafety[])DatabaseFactory.getQueryResults(c, VOTESAFETY_TABLE,
-                    VoteID + "=" + voteID + " AND " + Hash + "=?", new String[] {h});
+                    VoteID + "=" + voteID + " AND " + Hash + "=?", new String[] {h}, null);
             if(results == null) return true;
             return results.length == 0;
         } catch (SQLiteException e) {

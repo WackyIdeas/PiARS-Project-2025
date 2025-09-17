@@ -5,7 +5,10 @@ public class Session extends ObjectRow {
     private String endDate;
     private String name;
     private String description;
+    private String hexID;
 
+    public String getSessionHexID() { return hexID; }
+    public void setSessionHexID(String s) { hexID = s; }
     public String getDate() {
         return date;
     }
@@ -27,7 +30,5 @@ public class Session extends ObjectRow {
     public void setName(String s) {
         name = s;
     }
-    public void setDescription(String s) {
-        description = s;
-    }
+    public void setDescription(String s) { description = s; }
 }

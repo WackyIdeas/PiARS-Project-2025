@@ -1,6 +1,8 @@
 package bogdan.cvetanovski.pasalic;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -15,6 +17,8 @@ public class ResultsActivity extends AppCompatActivity {
 
     int sessionID;
     Vote vote;
+    private Handler handler = new Handler(Looper.getMainLooper());
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,13 +32,21 @@ public class ResultsActivity extends AppCompatActivity {
         sessionID = Objects.requireNonNull(getIntent().getExtras()).getInt("sessionID");
     }
     void updateResults() {
-        vote = DatabaseManager.getInstance(this).getResults(sessionID);
-        TextView votesYes = findViewById(R.id.yesVotes);
-        TextView votesNo = findViewById(R.id.noVotes);
-        TextView votesAbstain = findViewById(R.id.abstainVotes);
-        votesYes.setText(getString(R.string.VotedYES, vote.getYesVotes()));
-        votesNo.setText(getString(R.string.VotedNO, vote.getNoVotes()));
-        votesAbstain.setText(getString(R.string.VotedABSTAIN, vote.getAbstainVotes()));
+        new Thread(() -> {
+            vote = DatabaseManager.getInstance(this).getResults(sessionID);
+            handler.post(() -> {
+                TextView votesYes = findViewById(R.id.yesVotes);
+                TextView votesNo = findViewById(R.id.noVotes);
+                TextView votesAbstain = findViewById(R.id.abstainVotes);
+                if(vote == null) {
+                    votesNo.setText(getString(R.string.VoteResultsError));
+                    return;
+                }
+                votesYes.setText(getString(R.string.VotedYES, vote.getYesVotes()));
+                votesNo.setText(getString(R.string.VotedNO, vote.getNoVotes()));
+                votesAbstain.setText(getString(R.string.VotedABSTAIN, vote.getAbstainVotes()));
+            });
+        }).start();
     }
     @Override
     protected void onStart() {
