@@ -209,7 +209,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
         JSONArray votes;
         try {
             sessions = HttpHelper.getJSONArrayFromURL("sessions");
-            votes = HttpHelper.getJSONArrayFromURL("votes?sessionId=");
+            votes = HttpHelper.getJSONArrayFromURL("votes");
         } catch (JSONException | IOException e) {
             return e.getMessage();
         }
