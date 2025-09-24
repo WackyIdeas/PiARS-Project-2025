@@ -119,7 +119,7 @@ public class SessionService extends Service {
                     try {
                         // Use SQLite to query sessions that are set to expire in less than x minutes
                         Session[] soonToEndSessions = (Session[])DatabaseFactory.getQueryResults(context, DatabaseManager.SESSIONS_TABLE,
-                                "ROUND((JULIANDAY("+DatabaseManager.EndDate+") - JULIANDAY("+DatabaseManager.Date+")) * 1440) <= 15", null, null);
+                                "ROUND((JULIANDAY("+DatabaseManager.EndDate+") - JULIANDAY('now')) * 1440) BETWEEN 0 AND 15", null, null);
 
                         if(soonToEndSessions != null && soonToEndSessions.length > 0) {
                             handler.post(() -> {
