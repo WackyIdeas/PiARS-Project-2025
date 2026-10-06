@@ -2,6 +2,16 @@
 
 ## Autor: Bogdan Cvetanovski Pašalić, RA 26/2022
 
+This is an Android application made for hosting voting sessions within a university environment. The application talks to a backend server with a MongoDB database, adapting it to a local SQLite database, managing user accounts (administrator, regular user), holding and managing voting sessions, and allowing regular users to cast secure, anonymous, non-repeatable votes. 
+
+![s1](./k2_screenshots/SM-A505FN_Android_12/Screenshot_20250819-184035_DecideIT.png)
+
+![s2](./k2_screenshots/SM-A505FN_Android_12/Screenshot_20250819-184111_DecideIT.png)
+
+![s3](./k1_screenshots/SM-A505FN_Android_12/Screenshot_20250715-141941_DecideIT.png)
+
+![s4](./k1_screenshots/SM-A505FN_Android_12/Screenshot_20250715-141850_DecideIT.png)
+
 ### Notes:
 
 - Application has been tested on: 
